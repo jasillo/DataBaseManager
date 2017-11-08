@@ -16,6 +16,7 @@ namespace DataBaseManager
         cadena,
         entero,
         boleano,
+        fecha,
         pcCreateTable,
         pcDropTable,
         pcSelect,
@@ -28,7 +29,9 @@ namespace DataBaseManager
         pcAll,
         identificador,
         puntoComa,
-        igual
+        igual,
+        mayor,
+        menor
     };
 
     class Node
@@ -42,6 +45,13 @@ namespace DataBaseManager
             token = t;
             line = l;
             data = d;
+        }
+
+        public Node(Node n)
+        {
+            token = n.token;
+            line = n.line;
+            data = n.data;
         }
     }
 }

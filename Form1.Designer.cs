@@ -31,6 +31,7 @@
             this.tbSql = new System.Windows.Forms.TextBox();
             this.tbResult = new System.Windows.Forms.TextBox();
             this.tbnExecute = new System.Windows.Forms.Button();
+            this.btnVerTablas = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // tbSql
@@ -61,11 +62,22 @@
             this.tbnExecute.UseVisualStyleBackColor = true;
             this.tbnExecute.Click += new System.EventHandler(this.tbnExecute_Click);
             // 
+            // btnVerTablas
+            // 
+            this.btnVerTablas.Location = new System.Drawing.Point(461, 144);
+            this.btnVerTablas.Name = "btnVerTablas";
+            this.btnVerTablas.Size = new System.Drawing.Size(75, 23);
+            this.btnVerTablas.TabIndex = 3;
+            this.btnVerTablas.Text = "Ver tablas";
+            this.btnVerTablas.UseVisualStyleBackColor = true;
+            this.btnVerTablas.Click += new System.EventHandler(this.btnVerTablas_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1018, 431);
+            this.Controls.Add(this.btnVerTablas);
             this.Controls.Add(this.tbnExecute);
             this.Controls.Add(this.tbResult);
             this.Controls.Add(this.tbSql);
@@ -82,6 +94,7 @@
         private System.Windows.Forms.TextBox tbSql;
         private System.Windows.Forms.TextBox tbResult;
         private System.Windows.Forms.Button tbnExecute;
+        private System.Windows.Forms.Button btnVerTablas;
     }
 }
 

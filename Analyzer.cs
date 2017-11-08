@@ -6,20 +6,24 @@ using System.Threading.Tasks;
 
 namespace DataBaseManager
 {    
-    class Analyzer
+    partial class Analyzer
     {
         public string errors;
         public List<Node> myNodes;
+        public DBDescriptor db;
         
         public Analyzer()
         {
             myNodes = new List<Node>();
             errors = "";
-        }
+            db = new DBDescriptor();
+        }        
             
         public void analizeSql(string text)
         {
             myNodes.Clear();
+            errors = "";
+
             int line = 1;
             int state = 0;
             Token tempToken;
@@ -179,12 +183,11 @@ namespace DataBaseManager
         }
 
         private void saveNode(string word, Token token, int line)
-        {
-            if (token == Token.vacio)
-                errors += String.Format("Error en linea {0}: {1} {2}",line,word,Environment.NewLine);
+        {           
             if (String.IsNullOrEmpty(word.Trim()))
                 return;
-
+             if (token == Token.vacio)
+                errors += String.Format("Error en linea {0}: {1} {2}",line,word,Environment.NewLine);
             Token t = Token.identificador;
             if (token != Token.identificador)
             {                
@@ -216,6 +219,8 @@ namespace DataBaseManager
                 t = Token.pcInteger;
             else if (word.ToLower() == "boolean")
                 t = Token.pcBoleano;
+            else if (word.ToLower() == "date")
+                t = Token.pcFecha;
             else if (word.ToLower() == "true")
                 t = Token.boleano;
             else if (word.ToLower() == "false")
@@ -223,102 +228,17 @@ namespace DataBaseManager
             myNodes.Add(new Node(t, line, word));
         }
 
-        public string showListofNodes()
+        public void showListofNodes()
         {
             string result = "";
             for (int i = 0; i < myNodes.Count; i++)
-                result += String.Format("dato: {0}\t token: {1}\t linea: {2}{3}", 
-                    myNodes[i].data, myNodes[i].token, myNodes[i].line, Environment.NewLine);            
-            return result;
+            {
+                result = String.Format("dato: {0}\t token: {1}\t linea: {2}{3}",
+                    myNodes[i].data, myNodes[i].token, myNodes[i].line, Environment.NewLine);
+                Console.WriteLine(result);
+            } 
         }
         
-        public void analyzeNodes()
-        {
-            List<Node> types = new List<Node>();
-            List<Node> values = new List<Node>();
-            List<Node> fields = new List<Node>();
-            Node tableName;
-            List<Node> where = new List<Node>(3);
-            List<Node> set = new List<Node>(3);
-            int state = 0;
-            for (int i = 0; i < myNodes.Count; i++)
-            {
-                switch (state)
-                {
-                    case 0:
-                        if (myNodes[1].token == Token.pcCreateTable)
-                            state = 1;
-                        else if (myNodes[1].token == Token.pcDropTable)
-                            state = 11;
-                        else if (myNodes[1].token == Token.pcDelete)
-                            state = 21;
-                        break;
-                    case 1:
-                        if (myNodes[1].token != Token.identificador)                        
-                            errors += String.Format("Error en linea {0}, se esperaba nombre Tabla, e obtuvo {1}{2}",
-                                myNodes[i].line, myNodes[i].data, Environment.NewLine);
-                        tableName = myNodes[1];
-                        state = 2;
-                        break;
-                    case 2:
-                        if (myNodes[1].token == Token.puntoComa)
-                        {
-                            if (!String.IsNullOrEmpty(errors))
-                                return;
-                            //ejecutar query
-                            state = 0;
-                        }
-                        else if (myNodes[1].token == Token.identificador)
-                        {
-                            fields.Add(myNodes[1]);
-                            state = 3;
-                        }
-                        else
-                        {
-                            errors += String.Format("Error en linea {0}, se esperaba nombre campo, se obtuvo {1}{2}",
-                                myNodes[i].line, myNodes[i].data, Environment.NewLine);
-                            state = 3;
-                        }
-                        break;
-                    case 3:
-                        if (myNodes[1].token < Token.pcVarChar || myNodes[1].token >Token.pcBoleano)
-                            errors += String.Format("Error en linea {0}, se esperaba tipo campo, se obtuvo {1}{2}",
-                                myNodes[i].line, myNodes[i].data, Environment.NewLine);
-                        state = 2;
-                        break;
-                    case 11:
-                        if (myNodes[1].token != Token.identificador)
-                            errors += String.Format("Error en linea {0}, se esperaba nombre tabla, se obtuvo {1}{2}",
-                                myNodes[i].line, myNodes[i].data, Environment.NewLine);
-                        state = 12;
-                        break;
-                    case 12:
-                        if (myNodes[1].token != Token.puntoComa)
-                            errors += String.Format("Error en linea {0}, se esperaba punto y coma, se obtuvo {1}{2}",
-                                myNodes[i].line, myNodes[i].data, Environment.NewLine);
-                        if (!String.IsNullOrEmpty(errors))
-                            return;
-                        //ejecutar query
-                        state = 0;
-                        break;
-                    case 21:
-                        if (myNodes[1].token != Token.identificador)
-                            errors += String.Format("Error en linea {0}, se esperaba nombre tabla, se obtuvo {1}{2}",
-                                myNodes[i].line, myNodes[i].data, Environment.NewLine);
-                        state = 22;
-                        break;
-                    case 22:
-                        if (myNodes[i].token != Token.pcWhere)
-                            errors += String.Format("Error en linea {0}, se esperaba WHERE, se obtuvo {1}{2}",
-                                myNodes[i].line, myNodes[i].data, Environment.NewLine);
-                        state = 23;
-                        break;
-                    case 23:
-                        break;
-                    default:
-                        break;
-                }
-            }            
-        }
-    }
+        
+    } //fin de clase
 }

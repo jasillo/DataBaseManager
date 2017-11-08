@@ -12,7 +12,7 @@ namespace DataBaseManager
 {
     public partial class Form1 : Form
     {
-        private Analyzer myLexical;
+        private Analyzer myAnalyzer;
         public Form1()  
         {
             InitializeComponent();
@@ -20,18 +20,34 @@ namespace DataBaseManager
 
         private void Form1_Load(object sender, EventArgs e)
         {            
-            myLexical = new Analyzer();
+            myAnalyzer = new Analyzer();
         }
 
         private void tbnExecute_Click(object sender, EventArgs e)
         {
+            tbResult.Text = "";
             string sql = tbSql.Text + ' ';
-            sql = sql.Replace("\n", "");            
-            myLexical.analizeSql(sql);
-            if (String.IsNullOrEmpty (myLexical.errors))
-                tbResult.Text = myLexical.errors;
-            else
-                tbResult.Text = myLexical.showListofNodes();            
+            sql = sql.Replace("\n", "");
+            myAnalyzer.analizeSql(sql);
+            //myLexical.showListofNodes();
+            Console.WriteLine(myAnalyzer.errors);
+            if (!String.IsNullOrEmpty(myAnalyzer.errors))
+            {
+                tbResult.Text = "lexical errors : \r" + myAnalyzer.errors;
+                return;
+            }
+            myAnalyzer.analyzeNodes();
+            if (!String.IsNullOrEmpty(myAnalyzer.errors))
+            {
+                tbResult.Text = "sintactic errors : \r" + myAnalyzer.errors;
+                return;
+            }
+                       
+        }
+
+        private void btnVerTablas_Click(object sender, EventArgs e)
+        {
+            tbResult.Text = myAnalyzer.db.show();
         }
     }
 }
