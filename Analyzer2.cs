@@ -18,8 +18,10 @@ namespace DataBaseManager
             List<string> set = new List<string>(3);
             int tempState1 = 0;
             int tempState2 = 0;
+            string results = "";
 
             int state = 0;
+
             for (int i = 0; i < myNodes.Count; i++)
             {
                 //Console.WriteLine(state);
@@ -109,6 +111,7 @@ namespace DataBaseManager
                             errors += String.Format("Error al borrar tabla {0}, {1}{2}", tableName, db.errors, Environment.NewLine);
                             return;
                         }
+                        db.save();
                         Console.WriteLine("drop correcto");
                         state = 0;
                         break;
@@ -171,15 +174,22 @@ namespace DataBaseManager
                     case 42:
                         if (myNodes[i].token == Token.puntoComa)
                             goto case 43;
-                        if (myNodes[i].token < Token.cadena || myNodes[i].token > Token.fecha)
+                        if (myNodes[i].token < Token.varchar || myNodes[i].token > Token.date)
                             errors += String.Format("Error en linea {0}, se esperaba valor, se obtuvo {1}{2}",
                                 myNodes[i].line, myNodes[i].data, Environment.NewLine);
                         values.Add(myNodes[i].data);
+                        types.Add(myNodes[i].token.ToString());
                         break;
                     case 43:
                         if (!String.IsNullOrEmpty(errors))
                             return;
                         //ejecutar query
+                        if ( !db.insertRow(tableName, types, values))
+                        {
+                            errors += String.Format("Error al insertar en tabla {0}, {1}{2}", tableName, db.errors, Environment.NewLine);
+                            return;
+                        }
+
                         Console.WriteLine("insert correcto");
                         state = 0;
                         break;
@@ -237,7 +247,7 @@ namespace DataBaseManager
                         state = 104;
                         break;
                     case 104: // caso set
-                        if (myNodes[i].token < Token.cadena || myNodes[i].token > Token.fecha)
+                        if (myNodes[i].token < Token.varchar || myNodes[i].token > Token.date)
                             errors += String.Format("Error en linea {0}, se esperaba valor, se obtuvo {1}{2}",
                                 myNodes[i].line, myNodes[i].data, Environment.NewLine);
                         set.Add(myNodes[i].data);
@@ -246,6 +256,8 @@ namespace DataBaseManager
 
                     ///////////////////////////////////////////////////////////////
                     case 111: // caso where
+                        if (myNodes[i].token == Token.puntoComa)
+                            goto case tempState2;
                         if (myNodes[i].token != Token.pcWhere)
                             errors += String.Format("Error en linea {0}, se esperaba palabra clave WHERE, se obtuvo {1}{2}",
                                 myNodes[i].line, myNodes[i].data, Environment.NewLine);
@@ -267,7 +279,7 @@ namespace DataBaseManager
                         state = 114;
                         break;
                     case 114: // caso where
-                        if (myNodes[i].token < Token.cadena || myNodes[i].token > Token.fecha)
+                        if (myNodes[i].token < Token.varchar || myNodes[i].token > Token.date)
                             errors += String.Format("Error en linea {0}, se esperaba valor, se obtuvo {1}{2}",
                                 myNodes[i].line, myNodes[i].data, Environment.NewLine);
                         where.Add(myNodes[i].data);

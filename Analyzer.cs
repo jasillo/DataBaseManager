@@ -98,7 +98,7 @@ namespace DataBaseManager
                     case 2: //numbers
                         if (tempToken > Token.vacio)
                         {
-                            saveNode(word, Token.entero, line);
+                            saveNode(word, Token.integer, line);
                             saveNode(character.ToString(), tempToken, line);
                             state = 0;
                             break;
@@ -107,18 +107,18 @@ namespace DataBaseManager
                             word += character;
                         else if (character == ' ')
                         {
-                            saveNode(word, Token.entero, line);
+                            saveNode(word, Token.integer, line);
                             state = 0;
                         }
                         else if (character == '\r')
                         {                            
-                            saveNode(word, Token.entero, line);
+                            saveNode(word, Token.integer, line);
                             line++;
                             state = 0;
                         }
                         else if (character == '"')
                         {
-                            saveNode(word, Token.entero, line);
+                            saveNode(word, Token.integer, line);
                             state = 3;
                         }
                         else
@@ -127,7 +127,7 @@ namespace DataBaseManager
                     case 3:
                         if (character == '"')
                         {
-                            saveNode(word, Token.cadena, line);
+                            saveNode(word, Token.varchar, line);
                             state = 0;
                         }
                         else if (character == '\r')
@@ -222,9 +222,9 @@ namespace DataBaseManager
             else if (word.ToLower() == "date")
                 t = Token.pcFecha;
             else if (word.ToLower() == "true")
-                t = Token.boleano;
+                t = Token.boolean;
             else if (word.ToLower() == "false")
-                t = Token.boleano;
+                t = Token.boolean;
             myNodes.Add(new Node(t, line, word));
         }
 

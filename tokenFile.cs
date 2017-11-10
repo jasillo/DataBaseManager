@@ -13,10 +13,10 @@ namespace DataBaseManager
         pcInteger, //3
         pcBoleano, //4
         pcFecha,    //5
-        cadena,
-        entero,
-        boleano,
-        fecha,
+        varchar,
+        integer,
+        boolean,
+        date,
         pcCreateTable,
         pcDropTable,
         pcSelect,
@@ -38,7 +38,7 @@ namespace DataBaseManager
     {
         public Token token;
         public int line;
-        public string data;
+        public string data;        
 
         public Node(Token t, int l, string d)
         {
@@ -52,6 +52,29 @@ namespace DataBaseManager
             token = n.token;
             line = n.line;
             data = n.data;
+        }
+
+        
+    }
+
+    public static class myfunctions
+    {
+        public static int stringSize = 50;
+        public static int intSize = sizeof(int);
+        public static int dateSize = 8;
+        public static int boolSize = 1;
+        public static string fixedString(string word)
+        {
+            int tam = stringSize - word.Length;
+            string relleno = new string('*', tam);
+            string r = relleno + word;
+            return r;
+        }
+
+        public static string getString(string word)
+        {
+            string r = word.Replace('*', ' ');
+            return r.Trim();
         }
     }
 }
