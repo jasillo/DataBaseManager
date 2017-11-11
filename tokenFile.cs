@@ -19,6 +19,7 @@ namespace DataBaseManager
         date,
         pcCreateTable,
         pcDropTable,
+        pcCreateIndex,
         pcSelect,
         pcFrom,
         pcWhere,
@@ -27,6 +28,7 @@ namespace DataBaseManager
         pcSet,
         pcDelete,
         pcAll,
+        pcOn,
         identificador,
         puntoComa,
         igual,
@@ -76,6 +78,6 @@ namespace DataBaseManager
         {
             string r = word.Replace('*', ' ');
             return r.Trim();
-        }
+        }        
     }
 }

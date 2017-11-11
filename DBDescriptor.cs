@@ -246,5 +246,32 @@ namespace DataBaseManager
             errors += String.Format("No existe la tabla");
             return -1;
         }
+
+        public bool createIndex(string tableName, string fieldName)
+        {
+            int index = findTable(tableName);
+            if (index == -1)
+            {
+                errors += String.Format("no existe la tabla");
+                return false;
+            }
+
+            int fieldIndex = myTables[index].isField(fieldName);
+            if (fieldIndex == -1)
+            {
+                errors += String.Format("no existe el campo");
+                return false;
+            }
+
+            string indexName = tableName + "_" + fieldName;
+            if (myTables[index].findIndex(fieldIndex, indexName))
+            {
+                errors += String.Format("ya existe el indice");
+                return false;
+            }
+
+            myTables[index].createIndex(fieldIndex, indexName);
+            return true;
+        }
     }
 }

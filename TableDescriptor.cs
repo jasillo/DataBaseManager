@@ -11,9 +11,11 @@ namespace DataBaseManager
     {
         public List<string> myFields;
         public List<string> myTypes;
+        public List<BinaryTree<int>> btreesInts;
+        public List<BinaryTree<string>> btreesStrings;
         public string name;
         public List<int> hollows;
-        public List<int> indices;
+        public List<int> indices; //indices de las filas
         public int rowSize;
         private List<List<string>> buffer;
         private int end = 0;
@@ -26,6 +28,8 @@ namespace DataBaseManager
             hollows = new List<int>();
             indices = new List<int>();
             buffer = new List<List<string>>();  //coumn -row
+            btreesInts = new List<BinaryTree<int>>();
+            btreesStrings = new List<BinaryTree<string>>();
 
             rowSize = 0;
         }
@@ -89,7 +93,24 @@ namespace DataBaseManager
             }
             else
             {
-                //bw = new BinaryWriter(new FileStream(name + ".table", FileMode.Append));
+                int index = hollows[0];
+                hollows.RemoveAt(0);
+                indices.Add(index);
+
+                bw = new BinaryWriter(File.Open(name + ".table", FileMode.Open));
+                bw.BaseStream.Seek(index, SeekOrigin.Begin);
+                for (int i = 0; i < myTypes.Count; i++)
+                {
+                    if (myTypes[i] == "integer")
+                        bw.Write(Int32.Parse(values[i]));
+                    else if (myTypes[i] == "boolean")
+                        bw.Write(Boolean.Parse(values[i]));
+                    else if (myTypes[i] == "varchar")
+                        bw.Write(myfunctions.fixedString(values[i]));
+                    else
+                        bw.Write(values[i]);
+                }
+                bw.Close();                
             }            
         }
 
@@ -127,10 +148,9 @@ namespace DataBaseManager
         }
 
         public void fillBuffer(List<string> where)
-        {
-            
-            fill(indices);
-            if (where.Count == 0)
+        {            
+            fill(indices);            
+            if (where == null || where.Count == 0)
                 return;
             int columnIndex = isField(where[0]);
             //recorrido a traves de la filas
@@ -266,5 +286,79 @@ namespace DataBaseManager
             br.Close();
         }
         
+        public bool findIndex(int fieldIndex, string indexName)
+        {
+            if (myTypes[fieldIndex] == "varchar")
+            {
+                for (int i = 0; i < btreesStrings.Count; i++)
+                {
+                    if (btreesStrings[i].myName == indexName)
+                        return true;
+                }
+            }
+            else if(myTypes[fieldIndex] == "integer")
+            {
+                for (int i = 0; i < btreesInts.Count; i++)
+                {
+                    if (btreesStrings[i].myName == indexName)
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        public void createIndex(int fieldIndex, string indexName)
+        {
+            BinaryWriter bw;
+            bw = new BinaryWriter(new FileStream(indexName + ".index", FileMode.Create));
+            bw.Close();
+
+            fillBuffer(null);
+            if (myTypes[fieldIndex] == "varchar")
+            {
+                btreesStrings.Add(new BinaryTree<string>(indexName, myFields[fieldIndex]));
+                BinaryTree<string> temp = btreesStrings[btreesStrings.Count - 1];
+                for (int row = 0; row < buffer.Count; row++)
+                {
+                    string dato = buffer[row][fieldIndex];
+                    int index = Int32.Parse(buffer[row][myFields.Count]);
+                    temp.insert(dato, index);
+                }
+            }
+            else if (myTypes[fieldIndex] == "integer")
+            {
+                btreesInts.Add(new BinaryTree<int>(indexName, myFields[fieldIndex]));
+                BinaryTree<int> temp = btreesInts[btreesInts.Count - 1];
+                for (int row = 0; row < buffer.Count; row++)
+                {
+                    int dato = Int32.Parse(buffer[row][fieldIndex]);
+                    int index = Int32.Parse(buffer[row][myFields.Count]);
+                    temp.insert(dato, index);
+                }
+            }
+        }
+
+        public void saveIndices()
+        {
+            BinaryWriter bw;
+
+            for (int i = 0; i <btreesStrings.Count; i++)
+            {
+
+            }
+            for ()
+            bw = new BinaryWriter(new FileStream(name + ".list", FileMode.Create));
+            bw.Write(indices.Count);
+            for (int i = 0; i < indices.Count; i++)
+            {
+                bw.Write(indices[i]);
+            }
+            bw.Write(hollows.Count);
+            for (int i = 0; i < hollows.Count; i++)
+            {
+                bw.Write(hollows[i]);
+            }
+            bw.Close();
+        }
     }
 }

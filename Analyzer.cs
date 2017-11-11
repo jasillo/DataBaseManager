@@ -202,6 +202,10 @@ namespace DataBaseManager
 
             if (word.ToLower() == "createtable")
                 t = Token.pcCreateTable;
+            if (word.ToLower() == "createindex")
+                t = Token.pcCreateIndex;
+            if (word.ToLower() == "on")
+                t = Token.pcOn;
             else if (word.ToLower() == "droptable")
                 t = Token.pcDropTable;
             else if (word.ToLower() == "select")

@@ -68,6 +68,11 @@ namespace DataBaseManager
                             state = 51;
                             query = Token.pcSelect;
                         }
+                        else if (myNodes[i].token == Token.pcCreateIndex)
+                        {
+                            state = 61;
+                            query = Token.pcCreateIndex;
+                        }
                         else
                         {
                             errors += String.Format("Error en linea {0}, se esperaba comando valido, se obtuvo {1}{2}",
@@ -187,6 +192,28 @@ namespace DataBaseManager
                         goto case 200;
 
 
+                    ///////////////////////////////////////////////////////////////
+                    case 61: //came from createindex
+                        if (myNodes[i].token != Token.pcOn)
+                            errors += String.Format("Error en linea {0}, se esperaba ON, se obtuvo {1}{2}",
+                                myNodes[i].line, myNodes[i].data, Environment.NewLine);
+                        state = 62;
+                        break;
+                    case 62:
+                        if (myNodes[i].token != Token.identificador)
+                            errors += String.Format("Error en linea {0}, se esperaba nombre tabla, se obtuvo {1}{2}",
+                                myNodes[i].line, myNodes[i].data, Environment.NewLine);
+                        state = 63;
+                        tableName = myNodes[i].data;
+                        break;
+                    case 63:
+                        if (myNodes[i].token != Token.identificador)
+                            errors += String.Format("Error en linea {0}, se esperaba nombre columna, se obtuvo {1}{2}",
+                                myNodes[i].line, myNodes[i].data, Environment.NewLine);
+                        state = 200;
+                        fields.Add(myNodes[i].data);
+                        break;
+
                     //////////////////////////////////////////////////////////////
                     case 101: // caso set
                         if (myNodes[i].token == Token.puntoComa)
@@ -251,6 +278,7 @@ namespace DataBaseManager
                         state = tempState2;
                         break;
                     
+
                     //////////////////////////////////////////
                     case 200: //caso ;
                         if (myNodes[i].token != Token.puntoComa)
@@ -314,6 +342,16 @@ namespace DataBaseManager
                             }
                             results = String.Format("Resultado de select {1}{0}{1}", db.results, Environment.NewLine); 
                             Console.WriteLine("select correcto");
+                        }
+                        else if (query == Token.pcCreateIndex)
+                        {
+                            if (!db.createIndex(tableName, fields[0]))
+                            {
+                                errors += String.Format("Error al crear indice en tabla {0}, {1}{2}", tableName, db.errors, Environment.NewLine);
+                                return;
+                            }
+                            results = String.Format("Resultado de select {1}{0}{1}", db.results, Environment.NewLine);
+                            Console.WriteLine("createindex correcto");
                         }
 
                         state = 0;
