@@ -22,7 +22,7 @@ namespace DataBaseManager
         {            
             myAnalyzer = new Analyzer();
         }
-
+        
         private void tbnExecute_Click(object sender, EventArgs e)
         {
             tbResult.Text = "";
@@ -42,6 +42,7 @@ namespace DataBaseManager
                 tbResult.Text = "sintactic errors : \r" + myAnalyzer.errors;
                 return;
             }
+            tbResult.Text = myAnalyzer.results;
                        
         }
 

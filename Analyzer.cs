@@ -9,6 +9,7 @@ namespace DataBaseManager
     partial class Analyzer
     {
         public string errors;
+        public string results;
         public List<Node> myNodes;
         public DBDescriptor db;
         
@@ -179,6 +180,10 @@ namespace DataBaseManager
                 return Token.igual;
             else if (character == '*')
                 return Token.pcAll;
+            else if (character == '<')
+                return Token.menor;
+            else if (character == '>')
+                return Token.mayor;
             return Token.vacio;
         }
 

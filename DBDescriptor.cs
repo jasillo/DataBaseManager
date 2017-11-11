@@ -11,12 +11,18 @@ namespace DataBaseManager
     {
         List<TableDescriptor> myTables;
         public string errors;
+        public string results;
 
         public DBDescriptor()
         {
             myTables = new List<TableDescriptor>();
             errors = "";
             load();
+        }
+
+        ~DBDescriptor()
+        {
+            save();
         }
 
         private void load()
@@ -37,11 +43,6 @@ namespace DataBaseManager
                         string type = br.ReadString();
                         mytable.addField(myfunctions.getString (field),myfunctions.getString(type) );
                     }
-                    int hollowCount = br.ReadInt32();
-                    for (int j = 0; j < hollowCount; j++)
-                    {
-                        mytable.hollows.Add(br.ReadInt32());
-                    }
                     myTables.Add(mytable);
                 }
             }
@@ -51,6 +52,11 @@ namespace DataBaseManager
                 return;
             }
             br.Close();
+
+            for (int i = 0; i < myTables.Count; i++)
+            {
+                myTables[i].loadLists();
+            }
         }
 
         public void save()
@@ -63,17 +69,12 @@ namespace DataBaseManager
                 for (int i = 0; i < myTables.Count; i++)
                 {
                     bw.Write(myfunctions.fixedString(myTables[i].name));
-                    bw.Write(myTables[i].fields.Count);
-                    for (int j = 0; j < myTables[i].fields.Count; j++)
+                    bw.Write(myTables[i].myFields.Count);
+                    for (int j = 0; j < myTables[i].myFields.Count; j++)
                     {
-                        bw.Write( myfunctions.fixedString( myTables[i].fields[j] ) );
-                        bw.Write( myfunctions.fixedString( myTables[i].types[j] ) );
-                    }
-                    bw.Write(myTables[i].hollows.Count);
-                    for (int j = 0; j < myTables[i].hollows.Count; j++)
-                    {
-                        bw.Write( myTables[i].hollows[i] );
-                    }
+                        bw.Write( myfunctions.fixedString( myTables[i].myFields[j] ) );
+                        bw.Write( myfunctions.fixedString( myTables[i].myTypes[j] ) );
+                    }                    
                 }
             }
             catch (IOException e)
@@ -115,7 +116,9 @@ namespace DataBaseManager
             BinaryWriter bw;
             bw = new BinaryWriter(new FileStream(tableName+".table", FileMode.Create));
             bw.Close();
-            
+            bw = new BinaryWriter(new FileStream(tableName + ".list", FileMode.Create));
+            bw.Close();
+            td.saveLists();
             return true;
         }
 
@@ -127,6 +130,7 @@ namespace DataBaseManager
                 {
                     myTables.RemoveAt(i);
                     File.Delete(tableName + ".table");
+                    File.Delete(tableName + ".list");
                     return true;
                 }
             }
@@ -142,21 +146,21 @@ namespace DataBaseManager
                 errors += String.Format("tabla no existe");
                 return false;
             }                
-            if (types.Count != myTables[index].fields.Count)
+            if (types.Count != myTables[index].myFields.Count)
             {
                 errors += String.Format("numero de campos no coincide");
                 return false;
             }
             for (int i = 0; i < types.Count; i++)
             {
-                if (types[i] != myTables[index].types[i])
+                if (types[i] != myTables[index].myTypes[i])
                 {
                     errors += String.Format("el tipo de los valores no coincide");
                     return false;
                 }
             }
 
-            myTables[index].insertRow(types,values);  
+            myTables[index].insertRow(values);  
               
             return true;
         }
@@ -164,49 +168,60 @@ namespace DataBaseManager
         public bool select(string tablename, List<string> fields, List<string> where)
         {
             int index = findTable(tablename);
-            if (index == -1)
-            {
-                errors += String.Format("tabla no existe");
+            if (index == -1)                           
                 return false;
-            }
+            //consigue los indices de los columnas
+            if (fields.Count == 0)
+                return true;
             List<int> listoffield = new List<int>();
-            for (int i = 0; i < fields.Count; i++)
+            if (fields[0] == "*")
             {
-                int j = myTables[index].isField(fields[i]);
-                if (j == -1)
-                {
-                    errors += String.Format("no existe el campo {0}", fields[i]);
-                    return false;
-                }
-                listoffield.Add(j);
-            }
-
-            if (where.Count == 0)
-            {
-
+                for (int i = 0; i < myTables[index].myFields.Count; i++)
+                    listoffield.Add(i);
             }
             else
             {
-                if (myTables[index].isField(where[0]) == -1)
+                for (int i = 0; i < fields.Count; i++)
                 {
-                    errors += String.Format("no existe el campo {0}", fields[i]);
-                    return false;
-                }
-                //demas seguridad
-                
-                
-                myTables[index].select(listoffield);
-                foreach (List<string> subList in myList)
-                {
-                    foreach (string item in subList)
+                    int j = myTables[index].isField(fields[i]);
+                    if (j == -1)
                     {
-                        Console.WriteLine(item);
+                        errors += String.Format("no existe el campo {0}", fields[i]);
+                        return false;
                     }
+                    listoffield.Add(j);
+                    Console.WriteLine(j);
                 }
             }
-            
+           
+            //busca dentro de los datos fisicos y retorna su resultado
+            myTables[index].fillBuffer(where);
+            results = myTables[index].select(listoffield);
+            return true;
+        }
 
-
+        public bool delete(string tablename, List<string> where)
+        {
+            int index = findTable(tablename);
+            if (index == -1)                         
+                return false;
+            //comprobar si existe la columna
+            int columnIndex = myTables[index].isField(where[0]);
+            if (columnIndex == -1)
+            {
+                errors += String.Format("no existe el campo {0}", where[0]);
+                return false;
+            }
+            //comprobar si es el mismo tipo de dato que el de la tabla
+            Console.WriteLine("tipos : {0}{1}", myTables[index].myTypes[columnIndex], where[3]);
+            if (myTables[index].myTypes[columnIndex] != where[3])
+            {
+                errors += String.Format("error de tipo en el campo {0}", where[0]);
+                return false;
+            }
+            //llenar el buffer
+            myTables[index].fillBuffer(where);
+            myTables[index].deleteBuffer();
 
             return true;
         }

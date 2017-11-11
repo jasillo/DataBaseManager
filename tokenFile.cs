@@ -59,13 +59,14 @@ namespace DataBaseManager
 
     public static class myfunctions
     {
-        public static int stringSize = 50;
+        public static int stringSize = 26;
         public static int intSize = sizeof(int);
-        public static int dateSize = 8;
+        public static int dateSize = 9;
         public static int boolSize = 1;
+
         public static string fixedString(string word)
         {
-            int tam = stringSize - word.Length;
+            int tam = stringSize - word.Length-1;
             string relleno = new string('*', tam);
             string r = relleno + word;
             return r;

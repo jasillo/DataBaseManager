@@ -14,11 +14,11 @@ namespace DataBaseManager
             List<string> values = new List<string>();
             List<string> fields = new List<string>();
             string tableName = "";
-            List<string> where = new List<string>(3);
-            List<string> set = new List<string>(3);
+            List<string> where = new List<string>(4);
+            List<string> set = new List<string>(4);
             int tempState1 = 0;
             int tempState2 = 0;
-            string results = "";
+            Token query = Token.vacio;
 
             int state = 0;
 
@@ -39,30 +39,55 @@ namespace DataBaseManager
                         tempState2 = 0;
 
                         if (myNodes[i].token == Token.pcCreateTable)
+                        {
                             state = 1;
+                            query = Token.pcCreateTable;
+                        }                            
                         else if (myNodes[i].token == Token.pcDropTable)
+                        {
                             state = 11;
+                            query = Token.pcDropTable;
+                        }
                         else if (myNodes[i].token == Token.pcDelete)
+                        {
                             state = 21;
+                            query = Token.pcDelete;
+                        }                            
                         else if (myNodes[i].token == Token.pcUpdate)
+                        {
                             state = 31;
+                            query = Token.pcUpdate;
+                        }                           
                         else if (myNodes[i].token == Token.pcInsert)
+                        {
                             state = 41;
+                            query = Token.pcInsert;
+                        }   
                         else if (myNodes[i].token == Token.pcSelect)
+                        {
                             state = 51;
+                            query = Token.pcSelect;
+                        }
+                        else
+                        {
+                            errors += String.Format("Error en linea {0}, se esperaba comando valido, se obtuvo {1}{2}",
+                                myNodes[i].line, myNodes[i].data, Environment.NewLine);
+                            return;
+                        }
+                                               
                         break;
 
                     /////////////////////////////////////////////////////////////////
                     case 1: //came from createtable
                         if (myNodes[i].token != Token.identificador)
-                            errors += String.Format("Error en linea {0}, se esperaba nombre Tabla, e obtuvo {1}{2}",
+                            errors += String.Format("Error en linea {0}, se esperaba nombre Tabla, se obtuvo {1}{2}",
                                 myNodes[i].line, myNodes[i].data, Environment.NewLine);
                         tableName = myNodes[i].data;
                         state = 2;
                         break;
                     case 2:
                         if (myNodes[i].token == Token.puntoComa)
-                            goto case 4;
+                            goto case 200;
                         if (myNodes[i].token != Token.identificador)
                             errors += String.Format("Error en linea {0}, se esperaba nombre campo, se obtuvo {1}{2}",
                                 myNodes[i].line, myNodes[i].data, Environment.NewLine);
@@ -76,19 +101,7 @@ namespace DataBaseManager
                         types.Add(myNodes[i].data);
                         state = 2;
                         break;
-                    case 4:
-                        if (!String.IsNullOrEmpty(errors))
-                            return;
-                        //ejecutar query
-                        if (!db.createTable(tableName,fields,types))
-                        {
-                            errors += String.Format("Error al crear tabla {0}, {1}{2}", tableName,db.errors, Environment.NewLine);
-                            return;
-                        }
-                        db.save();
-                        Console.WriteLine("create correcto");
-                        state = 0;
-                        break;
+                    
 
                     /////////////////////////////////////////////////////////////
                     case 11: //came from droptable
@@ -96,25 +109,9 @@ namespace DataBaseManager
                             errors += String.Format("Error en linea {0}, se esperaba nombre tabla, se obtuvo {1}{2}",
                                 myNodes[i].line, myNodes[i].data, Environment.NewLine);
                         tableName = myNodes[i].data;
-                        state = 12;
+                        state = 200;
                         break;
-                    case 12:
-                        Console.WriteLine("entre");
-                        if (myNodes[i].token != Token.puntoComa)
-                            errors += String.Format("Error en linea {0}, se esperaba punto y coma, se obtuvo {1}{2}",
-                                myNodes[i].line, myNodes[i].data, Environment.NewLine);
-                        if (!String.IsNullOrEmpty(errors))
-                            return;
-                        //ejecutar query
-                        if (!db.dropTable(tableName))
-                        {
-                            errors += String.Format("Error al borrar tabla {0}, {1}{2}", tableName, db.errors, Environment.NewLine);
-                            return;
-                        }
-                        db.save();
-                        Console.WriteLine("drop correcto");
-                        state = 0;
-                        break;
+                    
 
                     /////////////////////////////////////////////////////
                     case 21: //came from delete
@@ -129,18 +126,10 @@ namespace DataBaseManager
                                 myNodes[i].line, myNodes[i].data, Environment.NewLine);
                         tableName = myNodes[i].data;
                         state = 111; //where
-                        tempState1 = 23;
+                        tempState2 = 23;
                         break;                    
                     case 23:
-                        if (myNodes[i].token != Token.puntoComa)
-                            errors += String.Format("Error en linea {0}, se esperaba un valor, se obtuvo {1}{2}",
-                                myNodes[i].line, myNodes[i].data, Environment.NewLine);
-                        if (!String.IsNullOrEmpty(errors))
-                            return;
-                        //ejecutar query
-                        Console.WriteLine("delete correcto");
-                        state = 0;
-                        break;
+                        goto case 200;
 
                     ///////////////////////////////////////////////////////////
                     case 31: //came from update
@@ -153,15 +142,7 @@ namespace DataBaseManager
                         tempState2 = 32;
                         break;
                     case 32:
-                        if (myNodes[i].token != Token.puntoComa)
-                            errors += String.Format("Error en linea {0}, se esperaba punto coma, se obtuvo {1}{2}",
-                                myNodes[i].line, myNodes[i].data, Environment.NewLine);
-                        if (!String.IsNullOrEmpty(errors))
-                            return;
-                        //ejecutar query
-                        Console.WriteLine("update correcto");
-                        state = 0;
-                        break;
+                        goto case 200;
 
                     ////////////////////////////////////////////////////////////////
                     case 41://came from insert
@@ -173,26 +154,14 @@ namespace DataBaseManager
                         break;
                     case 42:
                         if (myNodes[i].token == Token.puntoComa)
-                            goto case 43;
+                            goto case 200;
                         if (myNodes[i].token < Token.varchar || myNodes[i].token > Token.date)
                             errors += String.Format("Error en linea {0}, se esperaba valor, se obtuvo {1}{2}",
                                 myNodes[i].line, myNodes[i].data, Environment.NewLine);
                         values.Add(myNodes[i].data);
                         types.Add(myNodes[i].token.ToString());
                         break;
-                    case 43:
-                        if (!String.IsNullOrEmpty(errors))
-                            return;
-                        //ejecutar query
-                        if ( !db.insertRow(tableName, types, values))
-                        {
-                            errors += String.Format("Error al insertar en tabla {0}, {1}{2}", tableName, db.errors, Environment.NewLine);
-                            return;
-                        }
-
-                        Console.WriteLine("insert correcto");
-                        state = 0;
-                        break;
+                    
 
                     ///////////////////////////////////////////////////////////
                     case 51: //came from select
@@ -201,8 +170,8 @@ namespace DataBaseManager
                             state = 52;
                             break;
                         }
-                        if (myNodes[i].token != Token.identificador)
-                            errors += String.Format("Error en linea {0}, se esperaba valor, se obtuvo {1}{2}",
+                        if (myNodes[i].token != Token.identificador && myNodes[i].token != Token.pcAll)
+                            errors += String.Format("Error en linea {0}, se esperaba campo, se obtuvo {1}{2}",
                                 myNodes[i].line, myNodes[i].data, Environment.NewLine);
                         fields.Add(myNodes[i].data);
                         break;
@@ -214,19 +183,14 @@ namespace DataBaseManager
                         state = 111;
                         tempState2 = 53;
                         break;
-                    case 53:                        
-                        if (myNodes[i].token != Token.puntoComa)
-                            errors += String.Format("Error en linea {0}, se esperaba punto coma, se obtuvo {1}{2}",
-                                myNodes[i].line, myNodes[i].data, Environment.NewLine);
-                        if (!String.IsNullOrEmpty(errors))
-                            return;
-                        //ejecutar query
-                        Console.WriteLine("select correcto");
-                        state = 0;
-                        break;
+                    case 53:
+                        goto case 200;
+
 
                     //////////////////////////////////////////////////////////////
                     case 101: // caso set
+                        if (myNodes[i].token == Token.puntoComa)
+                            goto case 200;
                         if (myNodes[i].token != Token.pcSet)
                             errors += String.Format("Error en linea {0}, se esperaba palabra clave SET, se obtuvo {1}{2}",
                                 myNodes[i].line, myNodes[i].data, Environment.NewLine);
@@ -254,17 +218,17 @@ namespace DataBaseManager
                         state = tempState1;
                         break;
 
+
                     ///////////////////////////////////////////////////////////////
                     case 111: // caso where
                         if (myNodes[i].token == Token.puntoComa)
-                            goto case tempState2;
+                            goto case 200;                
                         if (myNodes[i].token != Token.pcWhere)
                             errors += String.Format("Error en linea {0}, se esperaba palabra clave WHERE, se obtuvo {1}{2}",
                                 myNodes[i].line, myNodes[i].data, Environment.NewLine);
                         state = 112;
                         break;
                     case 112: // caso where
-                        Console.WriteLine("aqui");
                         if (myNodes[i].token != Token.identificador)
                             errors += String.Format("Error en linea {0}, se esperaba nombre campo, se obtuvo {1}{2}",
                                 myNodes[i].line, myNodes[i].data, Environment.NewLine);
@@ -283,7 +247,76 @@ namespace DataBaseManager
                             errors += String.Format("Error en linea {0}, se esperaba valor, se obtuvo {1}{2}",
                                 myNodes[i].line, myNodes[i].data, Environment.NewLine);
                         where.Add(myNodes[i].data);
+                        where.Add(myNodes[i].token.ToString());
                         state = tempState2;
+                        break;
+                    
+                    //////////////////////////////////////////
+                    case 200: //caso ;
+                        if (myNodes[i].token != Token.puntoComa)
+                            errors += String.Format("Error en linea {0}, se esperaba punto coma, se obtuvo {1}{2}",
+                                myNodes[i].line, myNodes[i].data, Environment.NewLine);
+                        if (!String.IsNullOrEmpty(errors))
+                            return;
+
+                        //ejecutar queries
+                        if (query == Token.pcCreateTable)
+                        {
+                            if (!db.createTable(tableName, fields, types))
+                            {
+                                errors += String.Format("Error al crear tabla {0}, {1}{2}", tableName, db.errors, Environment.NewLine);
+                                return;
+                            }
+                            results = String.Format("tabla {0} creada con exito{1}", tableName, Environment.NewLine);
+                            Console.WriteLine("create correcto");
+                        }
+                        else if (query == Token.pcDropTable)
+                        {
+                            if (!db.dropTable(tableName))
+                            {
+                                errors += String.Format("Error al eliminar tabla {0}, {1}{2}", tableName, db.errors, Environment.NewLine);
+                                return;
+                            }
+                            results = String.Format("tabla {0} borrada con exito{1}", tableName, Environment.NewLine);
+                            Console.WriteLine("drop correcto");
+                        }
+                        else if (query == Token.pcDelete)
+                        {
+                            if (!db.delete(tableName,where))
+                            {
+                                errors += String.Format("Error al eliminar tabla {0}, {1}{2}", tableName, db.errors, Environment.NewLine);
+                                return;
+                            }
+                            results = String.Format("filas de la tabla {0} borrados con exito{1}", tableName, Environment.NewLine);
+                            Console.WriteLine("delete correcto");
+                        }
+                        else if (query == Token.pcUpdate)
+                        {
+                            Console.WriteLine("update correcto");
+                        }
+                        else if (query == Token.pcInsert)
+                        {
+                           // Console.WriteLine("campos a insertar {0}{1}{2}", values[0],values[1],values[2]);
+                            if (!db.insertRow(tableName, types, values))
+                            {
+                                errors += String.Format("Error al insertar en tabla {0}, {1}{2}", tableName, db.errors, Environment.NewLine);
+                                return;
+                            }
+                            results = String.Format("campos insertados en tabla {0} con exito{1}", tableName, Environment.NewLine);
+                            Console.WriteLine("isnert correcto");
+                        }
+                        else if (query == Token.pcSelect)
+                        {
+                            if (!db.select(tableName,fields,where))
+                            {
+                                errors += String.Format("Error al seleccinar en tabla {0}, {1}{2}", tableName, db.errors, Environment.NewLine);
+                                return;
+                            }
+                            results = String.Format("Resultado de select {1}{0}{1}", db.results, Environment.NewLine); 
+                            Console.WriteLine("select correcto");
+                        }
+
+                        state = 0;
                         break;
                     default:
                         break;
