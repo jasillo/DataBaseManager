@@ -190,10 +190,8 @@ namespace DataBaseManager
                         return false;
                     }
                     listoffield.Add(j);
-                    Console.WriteLine(j);
                 }
-            }
-           
+            }           
             //busca dentro de los datos fisicos y retorna su resultado
             myTables[index].fillBuffer(where);
             results = myTables[index].select(listoffield);
@@ -249,28 +247,21 @@ namespace DataBaseManager
 
         public bool createIndex(string tableName, string fieldName)
         {
-            int index = findTable(tableName);
-            if (index == -1)
+            int tableIndex = findTable(tableName);
+            if (tableIndex == -1)
             {
                 errors += String.Format("no existe la tabla");
                 return false;
             }
-
-            int fieldIndex = myTables[index].isField(fieldName);
-            if (fieldIndex == -1)
-            {
-                errors += String.Format("no existe el campo");
-                return false;
-            }
-
-            string indexName = tableName + "_" + fieldName;
-            if (myTables[index].findIndex(fieldIndex, indexName))
+            //ver si existe indice para ese campo
+            int index = myTables[tableIndex].findIndex(fieldName);
+            if (index > -1)
             {
                 errors += String.Format("ya existe el indice");
                 return false;
             }
 
-            myTables[index].createIndex(fieldIndex, indexName);
+            myTables[tableIndex].createIndex(fieldName);
             return true;
         }
     }

@@ -7,33 +7,14 @@ using System.Threading.Tasks;
 namespace DataBaseManager
 {
     
-
-    public class TreeNode<T>
-    {
-        public T myData;
-        public TreeNode<T> left;
-        public TreeNode<T> right;
-        public List<int> indices;
-
-        public TreeNode(T data)
-        {
-            myData = data;
-            left = null;
-            right = null;
-            indices = new List<int>();
-        }
-    }    
-
-    public class BinaryTree<T>
+    public class BTree
     {        
-        TreeNode<T> root;
-        public string myName;
-        string myfield;
+        TreeNode root;
+        public string myfield;
 
-        public BinaryTree(string name, string field)
+        public BTree(string field)
         {
-            myName = name;
-            root = null;
+            root = new TreeNode();
             myfield = field;
         }
 
@@ -47,116 +28,112 @@ namespace DataBaseManager
 
         }
 
-        public List<int> findIndices(T data)
+        public void insert(string dato, int index)
         {
-            TreeNode<T> temp = findNode(root, data);
-            if (temp == null)
-                return null;
-            return temp.indices;
+            TreeNode current = root;
+            while (current != null)
+            {
+                //el nodo ya existe, se agrega el indice
+                int i = current.findValue(dato);
+                if (i != -1)
+                {
+                    //ordenar de ser posible
+                    current.values[i].indices.Add(index);
+                    return;
+                }
+                // es hoja
+                if (current.sons.Count == 0)
+                {
+                    current.addValue(new Record(dato,index));                    
+                    splitRecursive(current);
+                    return;
+                }
+                //no es hoja
+                else                
+                    current = current.findNextNode(dato);                                    
+            }
         }
 
-        public void insert(T dato, int index)
+        private void splitRecursive(TreeNode current)
         {
-            if (root == null)
+            if (current.values.Count <= TreeNode.maximum)
+                return;
+            //hay overflow
+            TreeNode sibling = new TreeNode(); ;
+            Record newRecord = current.split(sibling);
+            //es el root, se necista crear nodo nuevo
+            if (current.father == null)
             {
-                root = new TreeNode<T>(dato);
+                root = new TreeNode(newRecord, current, sibling);
+                current.father = sibling.father = root;
                 return;
             }
-            TreeNode<T> temp = findNode(root, dato);
-            //no existe el nodo
-            if (temp == null)
+            // se añada al padre existente
+            current.father.addValue(newRecord, sibling);
+            splitRecursive(current.father);
+        }
+
+        public void delete(string dato, int index)
+        {
+            TreeNode current = root;
+            while (current != null)
             {
-                temp = findFather(root, dato);
-                if (compare(dato, temp.myData))
+                //el nodo ya existe, se agrega el indice
+                int i = current.findValue(dato);
+                if (i != -1)
                 {
-                    temp.left = new TreeNode<T>(dato);
-                    temp.left.indices.Add(index);
+                    current.values[i].indices.Remove(index);
+                    return;
                 }
-                else
-                {
-                    temp.right = new TreeNode<T>(dato);
-                    temp.right.indices.Add(index);
-                }                    
-                return;
+                current = current.findNextNode(dato);
             }
-            //ya existe el nodo
-            temp.indices.Add(index);
         }
 
-        public bool delete(T dato, int index)
-        {
-            TreeNode<T> temp;
-            temp = findNode(root, dato);
-            if (temp == null)
-                return false;
-            for (int i = 0; i < temp.indices.Count; i++)
+        public List<int> findIndices(string data)
+        {             
+            TreeNode current = root;
+            while (current != null)
             {
-                if (temp.indices[i] == index)
-                {
-                    temp.indices.RemoveAt(i);
-                    return true;
-                }
+                //busca el dato dentro del nodo
+                int i = current.findValue(data);
+                if (i != -1)
+                    return current.values[i].indices;
+                current = current.findNextNode(data);
             }
-            return false;
+            return null;
         }
 
-        TreeNode<T> findFather(TreeNode<T> n, T data)
+        public TreeNode findNode(string data)
         {
-            if (n == null)
-                return n;
-            if (data.Equals(n.myData))
-                return n;
-            TreeNode<T> temp;
-            if (compare(data, n.myData))
-                temp = findFather(n.left, data);
-            else
-                temp = findFather(n.right, data);
-
-            if (temp == null)
-                return n;
-            return temp;           
-        }
-
-        TreeNode<T> findNode(TreeNode<T> n, T data)
-        {
-            if (n == null)
-                return n;
-            if (data.Equals(n.myData))
-                return n;
-            TreeNode<T> temp;
-            if (compare(data, n.myData))
-                temp = findNode(n.left, data);
-            else
-                temp = findNode(n.right, data);
-            return temp;
-        }
-
-        bool compare(T a, T b)
-        {
-            if (typeof(T) == typeof(int))
-                return Convert.ToInt32(a) < Convert.ToInt32(b);
-            if (typeof(T) == typeof(string))
+            TreeNode current = root;
+            while (current != null)
             {
-                string A = Convert.ToString(a);
-                string B = Convert.ToString(b);
-                if (String.Compare(A, B) == -1)
-                    return true;
-                return false;
+                //busca el dato dentro del nodo
+                int i = current.findValue(data);
+                if (i != -1)
+                    return current;
+                current = current.findNextNode(data);
             }
-            return false;
+            return null;
         }
+
         public void show()
         {
-            show(root,"");
+            //Console.WriteLine( root.values[0]);
+            show(root," ");
         }
-        private void show(TreeNode<T> n, string space)
+
+        private void show(TreeNode n, string space)
         {
             if (n == null)
                 return;
-            Console.WriteLine("{0}{1}",space, n.myData);
-            show(n.left, space + " ");
-            show(n.right, space + " ");
+            Console.Write("{0}", space);
+            for (int i = 0; i < n.values.Count; i++)            
+                Console.Write("{0} ", n.values[i].value);
+            Console.WriteLine();
+            for (int i = 0; i < n.sons.Count; i++)
+                show(n.sons[i], space + " ");
         }
 
-    }
-}
+    }// fin Btree
+} // fin namespace

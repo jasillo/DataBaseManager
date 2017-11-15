@@ -214,6 +214,7 @@ namespace DataBaseManager
                         fields.Add(myNodes[i].data);
                         break;
 
+
                     //////////////////////////////////////////////////////////////
                     case 101: // caso set
                         if (myNodes[i].token == Token.puntoComa)
@@ -350,7 +351,7 @@ namespace DataBaseManager
                                 errors += String.Format("Error al crear indice en tabla {0}, {1}{2}", tableName, db.errors, Environment.NewLine);
                                 return;
                             }
-                            results = String.Format("Resultado de select {1}{0}{1}", db.results, Environment.NewLine);
+                            results = String.Format("index creado con exito, {0}{1}", db.results, Environment.NewLine);
                             Console.WriteLine("createindex correcto");
                         }
 

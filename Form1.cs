@@ -48,17 +48,7 @@ namespace DataBaseManager
 
         private void btnVerTablas_Click(object sender, EventArgs e)
         {
-            tbResult.Text = myAnalyzer.db.show();
-            /*BinaryTree<string> bt = new BinaryTree<string>("nuevo");
-            bt.insert("jorge", 0);
-            bt.insert("luis", 0);
-            bt.insert("castañeda", 0);
-            bt.insert("sapo", 0);
-            bt.insert("pasajero", 0);
-            bt.insert("zorro", 0);
-            bt.insert("lata", 0);
-
-            bt.show();*/
+            tbResult.Text = myAnalyzer.db.show();           
         }
     }
 }
