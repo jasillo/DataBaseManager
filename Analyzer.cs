@@ -202,12 +202,14 @@ namespace DataBaseManager
 
             if (word.ToLower() == "createtable")
                 t = Token.pcCreateTable;
-            if (word.ToLower() == "createindex")
+            else if (word.ToLower() == "createindex")
                 t = Token.pcCreateIndex;
-            if (word.ToLower() == "on")
+            else if (word.ToLower() == "on")
                 t = Token.pcOn;
             else if (word.ToLower() == "droptable")
                 t = Token.pcDropTable;
+            else if (word.ToLower() == "dropindex")
+                t = Token.pcDropIndex;
             else if (word.ToLower() == "select")
                 t = Token.pcSelect;
             else if (word.ToLower() == "from")
@@ -234,6 +236,10 @@ namespace DataBaseManager
                 t = Token.boolean;
             else if (word.ToLower() == "false")
                 t = Token.boolean;
+            else if (word.ToLower() == "primary")
+                t = Token.pcPrimary;
+            else if (word.ToLower() == "secondary")
+                t = Token.pcSecondary;
             myNodes.Add(new Node(t, line, word));
         }
 

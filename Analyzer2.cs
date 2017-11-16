@@ -19,6 +19,7 @@ namespace DataBaseManager
             int tempState1 = 0;
             int tempState2 = 0;
             Token query = Token.vacio;
+            bool isprimary = false;
 
             int state = 0;
 
@@ -37,6 +38,7 @@ namespace DataBaseManager
                         tableName = "";
                         tempState1 = 0;
                         tempState2 = 0;
+                        isprimary = false;
 
                         if (myNodes[i].token == Token.pcCreateTable)
                         {
@@ -72,6 +74,11 @@ namespace DataBaseManager
                         {
                             state = 61;
                             query = Token.pcCreateIndex;
+                        }
+                        else if (myNodes[i].token == Token.pcDropIndex)
+                        {
+                            state = 71;
+                            query = Token.pcDropIndex;
                         }
                         else
                         {
@@ -210,10 +217,40 @@ namespace DataBaseManager
                         if (myNodes[i].token != Token.identificador)
                             errors += String.Format("Error en linea {0}, se esperaba nombre columna, se obtuvo {1}{2}",
                                 myNodes[i].line, myNodes[i].data, Environment.NewLine);
+                        state = 64;
+                        fields.Add(myNodes[i].data);
+                        break;
+                    case 64:
+                        if (myNodes[i].token == Token.puntoComa)
+                            goto case 200;
+                        if (myNodes[i].token == Token.pcPrimary)
+                            isprimary = true;
+                        state = 200;
+                        break;
+
+
+                    //////////////////////////////////////////////////////////////
+                    case 71: //came from dropindex
+                        if (myNodes[i].token != Token.pcOn)
+                            errors += String.Format("Error en linea {0}, se esperaba ON, se obtuvo {1}{2}",
+                                myNodes[i].line, myNodes[i].data, Environment.NewLine);
+                        state =72;
+                        break;
+                    case 72:
+                        if (myNodes[i].token != Token.identificador)
+                            errors += String.Format("Error en linea {0}, se esperaba nombre tabla, se obtuvo {1}{2}",
+                                myNodes[i].line, myNodes[i].data, Environment.NewLine);
+                        state = 73;
+                        tableName = myNodes[i].data;
+                        break;
+                    case 73:
+                        if (myNodes[i].token != Token.identificador)
+                            errors += String.Format("Error en linea {0}, se esperaba nombre columna, se obtuvo {1}{2}",
+                                myNodes[i].line, myNodes[i].data, Environment.NewLine);
                         state = 200;
                         fields.Add(myNodes[i].data);
                         break;
-
+                                            
 
                     //////////////////////////////////////////////////////////////
                     case 101: // caso set
@@ -346,7 +383,7 @@ namespace DataBaseManager
                         }
                         else if (query == Token.pcCreateIndex)
                         {
-                            if (!db.createIndex(tableName, fields[0]))
+                            if (!db.createIndex(tableName, fields[0], isprimary))
                             {
                                 errors += String.Format("Error al crear indice en tabla {0}, {1}{2}", tableName, db.errors, Environment.NewLine);
                                 return;
@@ -354,13 +391,23 @@ namespace DataBaseManager
                             results = String.Format("index creado con exito, {0}{1}", db.results, Environment.NewLine);
                             Console.WriteLine("createindex correcto");
                         }
-
+                        else if (query == Token.pcDropIndex)
+                        {
+                            if (!db.dropIndex(tableName, fields[0]))
+                            {
+                                errors += String.Format("Error al borrar indice en tabla {0}, {1}{2}", tableName, db.errors, Environment.NewLine);
+                                return;
+                            }
+                            results = String.Format("index borrado con exito, {0}{1}", db.results, Environment.NewLine);
+                            Console.WriteLine("createindex correcto");
+                        }
                         state = 0;
                         break;
                     default:
                         break;
                 }//fin de swich
             }//fin de for
+            db.results = "";
         }//fin analyzeNodes
 
     }//fin de clase

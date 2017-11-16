@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,25 +11,73 @@ namespace DataBaseManager
     public class BTree
     {        
         TreeNode root;
-        public string myfield;
+        public string name;
+        public bool primary;
 
         public BTree(string field)
         {
             root = new TreeNode();
-            myfield = field;
+            name = field;
+            primary = false;
         }
-
-        private void save()
+        public BTree(string field, bool pri)
         {
-
+            root = new TreeNode();
+            name = field;
+            primary = pri;
         }
 
-        public void load()
+        public void save(string tableName)
         {
-
+            BinaryWriter bw = new BinaryWriter(new FileStream("BD/" + tableName + "/" + name + ".index", FileMode.Create));
+            bw.Write(primary);
+            save(root,bw);
+            bw.Close();
         }
 
-        public void insert(string dato, int index)
+        private void save(TreeNode n, BinaryWriter bw)
+        {
+            bw.Write(n.values.Count);
+            for (int i = 0; i < n.values.Count; i++)
+            {
+                bw.Write(n.values[i].value);
+                bw.Write(n.values[i].indices.Count);
+                for (int j = 0; j < n.values[i].indices.Count; j++)                
+                    bw.Write(n.values[i].indices[j]);                
+            }
+            bw.Write(n.sons.Count);
+            for (int i = 0; i < n.sons.Count; i++)            
+                save(n.sons[i], bw);            
+        }
+
+        public void load(string tableName)
+        {
+            BinaryReader br = new BinaryReader(new FileStream("BD/" + tableName + "/" + name + ".index", FileMode.Open));
+            primary = br.ReadBoolean();
+            load(root, br);
+            br.Close();
+        }
+
+        private void load(TreeNode n, BinaryReader br)
+        {
+            int valuesCount = br.ReadInt32();
+            for (int i = 0; i < valuesCount; i++)
+            {
+                n.values.Add(new Record(br.ReadString()));
+                int indicesCount = br.ReadInt32();
+                for (int j = 0; j < indicesCount; j++)                
+                    n.values[i].indices.Add(br.ReadInt32());
+            }
+            int sonsCount = br.ReadInt32();
+            for (int i = 0; i < sonsCount; i++)
+            {
+                n.sons.Add(new TreeNode());
+                load(n.sons[i], br);
+            }
+                
+        }
+
+        public bool insert(string dato, int index)
         {
             TreeNode current = root;
             while (current != null)
@@ -37,21 +86,23 @@ namespace DataBaseManager
                 int i = current.findValue(dato);
                 if (i != -1)
                 {
-                    //ordenar de ser posible
+                    if (primary && current.values[i].indices.Count > 0)
+                        return false;
                     current.values[i].indices.Add(index);
-                    return;
+                    return true; ;
                 }
                 // es hoja
                 if (current.sons.Count == 0)
                 {
                     current.addValue(new Record(dato,index));                    
                     splitRecursive(current);
-                    return;
+                    return true;
                 }
                 //no es hoja
                 else                
                     current = current.findNextNode(dato);                                    
             }
+            return false;
         }
 
         private void splitRecursive(TreeNode current)
@@ -102,19 +153,19 @@ namespace DataBaseManager
             }
             return null;
         }
-
-        public TreeNode findNode(string data)
+        
+        public bool exist(string data)
         {
             TreeNode current = root;
             while (current != null)
             {
                 //busca el dato dentro del nodo
                 int i = current.findValue(data);
-                if (i != -1)
-                    return current;
+                if (i != -1 && current.values[i].indices.Count > 0)
+                    return true;
                 current = current.findNextNode(data);
             }
-            return null;
+            return false;
         }
 
         public void show()

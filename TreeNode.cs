@@ -16,7 +16,13 @@ namespace DataBaseManager
             value = value_;
             indices = new List<int>();
             indices.Add(index);
-        }        
+        }
+
+        public Record(string value_)
+        {
+            value = value_;
+            indices = new List<int>();
+        }
     }
 
     public class TreeNode

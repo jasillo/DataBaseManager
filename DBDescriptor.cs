@@ -17,6 +17,7 @@ namespace DataBaseManager
         {
             myTables = new List<TableDescriptor>();
             errors = "";
+            results = "";
             load();
         }
 
@@ -28,62 +29,58 @@ namespace DataBaseManager
         private void load()
         {
             BinaryReader br;
-            try
+            if (File.Exists("BD/database.db"))
             {
-                br = new BinaryReader( new FileStream("database.db", FileMode.Open) );
-                int tam = br.ReadInt32();
-                for (int i = 0; i < tam; i++)
+                br = new BinaryReader(new FileStream("BD/database.db", FileMode.Open));
+                //leer los descriptores de todas las tablas en la BD
+                int numberOfTables = br.ReadInt32();
+                for (int tableIndex = 0; tableIndex < numberOfTables; tableIndex++)
                 {
                     string tablename = br.ReadString();
-                    TableDescriptor mytable = new TableDescriptor( myfunctions.getString( tablename ) );
+                    myTables.Add(new TableDescriptor(tablename));
                     int fieldscount = br.ReadInt32();
                     for (int j = 0; j < fieldscount; j++)
                     {
-                        string field = br.ReadString();
-                        string type = br.ReadString();
-                        mytable.addField(myfunctions.getString (field),myfunctions.getString(type) );
+                        myTables[tableIndex].myFields.Add(br.ReadString());
+                        myTables[tableIndex].myTypes.Add(br.ReadString());
                     }
-                    myTables.Add(mytable);
+                    myTables[tableIndex].rowSize = br.ReadInt32();
+                    myTables[tableIndex].end = br.ReadInt32();
+                    int indexCount = br.ReadInt32();
+                    for (int i = 0; i < indexCount; i++)                    
+                        myTables[tableIndex].btrees.Add(new BTree(br.ReadString()));                    
                 }
-            }
-            catch (IOException e)
-            {
-                Console.WriteLine(e.Message + "\n Cannot open file.");
-                return;
-            }
-            br.Close();
+                br.Close();
 
-            for (int i = 0; i < myTables.Count; i++)
-            {
-                myTables[i].loadLists();
-            }
+                for (int tableIndex = 0; tableIndex < myTables.Count; tableIndex++)                
+                    myTables[tableIndex].load();
+                
+            }                              
         }
 
         public void save()
         {
-            BinaryWriter bw;
-            try
+            BinaryWriter bw = new BinaryWriter(new FileStream("BD/database.db", FileMode.Create));
+            bw.Write(myTables.Count);
+            for (int tableIndex = 0; tableIndex < myTables.Count; tableIndex++)
             {
-                bw = new BinaryWriter(new FileStream("database.db", FileMode.Create));
-                bw.Write(myTables.Count);
-                for (int i = 0; i < myTables.Count; i++)
+                bw.Write(myTables[tableIndex].name);
+                bw.Write(myTables[tableIndex].myFields.Count);
+                for (int  column = 0; column < myTables[tableIndex].myFields.Count; column++)
                 {
-                    bw.Write(myfunctions.fixedString(myTables[i].name));
-                    bw.Write(myTables[i].myFields.Count);
-                    for (int j = 0; j < myTables[i].myFields.Count; j++)
-                    {
-                        bw.Write( myfunctions.fixedString( myTables[i].myFields[j] ) );
-                        bw.Write( myfunctions.fixedString( myTables[i].myTypes[j] ) );
-                    }                    
+                    bw.Write(myTables[tableIndex].myFields[column]);
+                    bw.Write(myTables[tableIndex].myTypes[column]);
                 }
+                bw.Write(myTables[tableIndex].rowSize);
+                bw.Write(myTables[tableIndex].end);
+                bw.Write(myTables[tableIndex].btrees.Count);
+                for (int btreeIndex =0; btreeIndex < myTables[tableIndex].btrees.Count;btreeIndex++)                
+                    bw.Write(myTables[tableIndex].btrees[btreeIndex].name);                
             }
-            catch (IOException e)
-            {
-                Console.WriteLine(e.Message + "\n Cannot create file.");
-                return;
-            }
-            //bw.Write("hola");
             bw.Close();
+
+            for (int tableindex = 0; tableindex < myTables.Count; tableindex++)   
+                myTables[tableindex].save();            
         }
 
 
@@ -113,12 +110,9 @@ namespace DataBaseManager
                 }
             }
             myTables.Add(td);
-            BinaryWriter bw;
-            bw = new BinaryWriter(new FileStream(tableName+".table", FileMode.Create));
-            bw.Close();
-            bw = new BinaryWriter(new FileStream(tableName + ".list", FileMode.Create));
-            bw.Close();
-            td.saveLists();
+            Directory.CreateDirectory("BD/"+ tableName);
+            BinaryWriter br = new BinaryWriter(new FileStream("BD/" + tableName + "/" + tableName + ".table", FileMode.Create));
+            br.Close();
             return true;
         }
 
@@ -129,8 +123,8 @@ namespace DataBaseManager
                 if (myTables[i].name == tableName)
                 {
                     myTables.RemoveAt(i);
-                    File.Delete(tableName + ".table");
-                    File.Delete(tableName + ".list");
+                    if (Directory.Exists("BD/" + tableName))
+                        Directory.Delete("BD/"+ tableName,true);
                     return true;
                 }
             }
@@ -160,8 +154,11 @@ namespace DataBaseManager
                 }
             }
 
-            myTables[index].insertRow(values);  
-              
+            if (!myTables[index].insertRow(values))
+            {
+                errors += String.Format("violacion de indice primario");
+                return false;
+            }
             return true;
         }
 
@@ -245,7 +242,7 @@ namespace DataBaseManager
             return -1;
         }
 
-        public bool createIndex(string tableName, string fieldName)
+        public bool createIndex(string tableName, string fieldName, bool isprimary)
         {
             int tableIndex = findTable(tableName);
             if (tableIndex == -1)
@@ -261,8 +258,28 @@ namespace DataBaseManager
                 return false;
             }
 
-            myTables[tableIndex].createIndex(fieldName);
+            if (!myTables[tableIndex].createIndex(fieldName, isprimary))
+            {
+                errors += String.Format("es primario y necesita tener a tabla vacia");
+                return false;
+            }
+
             return true;
+        }
+
+        public bool dropIndex(string tableName, string fieldName)
+        {
+            int tableIndex = findTable(tableName);
+            if (tableIndex == -1)
+            {
+                errors += String.Format("NO existe la tabla");
+                return false;
+            }
+            if (myTables[tableIndex].dropIndex(fieldName))
+                return true;
+            
+            errors += String.Format("NO existe el indice");
+            return false;
         }
     }
 }
