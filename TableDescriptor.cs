@@ -17,7 +17,11 @@ namespace DataBaseManager
         public List<int> indices; //indices de las filas
         public int rowSize;
         private List<List<string>> buffer;
+        public List<int> tempIndices;
+        public List<int> tempOffsets;
+        public int curretnPosition;
         public int end = 0;
+        public BinaryWriter tempbw;
 
         public TableDescriptor(string tableName)
         {
@@ -28,8 +32,10 @@ namespace DataBaseManager
             indices = new List<int>();
             buffer = new List<List<string>>();  //coumn -row
             btrees = new List<BTree>();
-
+            tempIndices = new List<int>();
+            tempOffsets = new List<int>();
             rowSize = 0;
+            curretnPosition = 0;
         }        
 
         public bool addField(string fieldName, string typeName)
@@ -77,22 +83,22 @@ namespace DataBaseManager
             if (hollows.Count == 0)
             {
 
-                bw = new BinaryWriter(File.Open("BD/"+ name + "/" + name + ".table", FileMode.Append));
+                //bw = new BinaryWriter(File.Open("BD/"+ name + "/" + name + ".table", FileMode.Append));
                 for (int i = 0; i < myTypes.Count; i++)
                 {
                     int btreeIndex = findBtreeIndex(myFields[i]);
                     if (btreeIndex > -1)
                         btrees[btreeIndex].insert(values[i], end);
                     if (myTypes[i] == "integer")
-                        bw.Write(Int32.Parse(values[i]));
+                        tempbw.Write(Int32.Parse(values[i]));
                     else if (myTypes[i] == "boolean")
-                        bw.Write(Boolean.Parse(values[i]));
+                        tempbw.Write(Boolean.Parse(values[i]));
                     else if (myTypes[i] == "varchar")
-                        bw.Write(myfunctions.fixedString(values[i]));
+                        tempbw.Write(myfunctions.fixedString(values[i]));
                     else
-                        bw.Write(values[i]);
+                        tempbw.Write(values[i]);
                 }
-                bw.Close();
+                //bw.Close();
                 indices.Add(end);
                 end += rowSize;
             }
@@ -187,12 +193,14 @@ namespace DataBaseManager
         {
             BinaryReader br = new BinaryReader(new FileStream("BD/" + name + "/" + name + ".list", FileMode.Open));
             int indicesCount = br.ReadInt32();
+            Console.WriteLine("ocupados {0}",indicesCount);
             for (int i = 0; i < indicesCount; i++)
                 indices.Add(br.ReadInt32());
             int hollowsCount = br.ReadInt32();
+            Console.WriteLine("huecos {0}", hollowsCount);
             for (int i = 0; i < hollowsCount; i++)
                 hollows.Add(br.ReadInt32());
-            br.Close();
+            br.Close(); 
 
             for (int btreeIndex = 0; btreeIndex < btrees.Count; btreeIndex++)
                 btrees[btreeIndex].load(name);
@@ -234,9 +242,9 @@ namespace DataBaseManager
             BinaryReader br;
             br = new BinaryReader(File.Open("BD/"+ name + "/" + name + ".table", FileMode.Open));
             
-            for (int i = 0; i < indices.Count; i++)
+            for (int i = 0; i < buffer.Count; i++)
             {
-                Console.WriteLine(indices[i]);                
+                //Console.WriteLine(indices[i]);                
                 br.BaseStream.Seek(indices[i], SeekOrigin.Begin);
                 for (int j = 0; j < myTypes.Count; j++)
                 {
@@ -252,7 +260,7 @@ namespace DataBaseManager
                 buffer[i].Add(indices[i].ToString());
             }
             br.Close();
-            
+            Console.WriteLine("lines {0}", buffer.Count);
         }
 
         private void fill(List<int> indices, List<int> indicesFields)
@@ -265,7 +273,7 @@ namespace DataBaseManager
             BinaryReader br;
             br = new BinaryReader(File.Open("BD/" + name + "/" + name + ".table", FileMode.Open));
 
-            for (int i = 0; i < indices.Count; i++) // por cada fila
+            for (int i = 0; i < buffer.Count; i++) // por cada fila
             {  
                 for (int j = 0; j < indicesFields.Count; j++) // por cada campo seleccionado
                 {
@@ -363,6 +371,7 @@ namespace DataBaseManager
                     temp.Add(indices[i]);
             }
             br.Close();
+            Console.WriteLine(temp.Count);
             return temp;
         }
 
@@ -371,7 +380,7 @@ namespace DataBaseManager
             int pos = 0;
             for (int i = 0; i < myFields.Count; i++)
             {
-                Console.WriteLine(myTypes[i]);
+                //Console.WriteLine(myTypes[i]);
                 if (myFields[i] == field_)
                     return pos;
                 if (myTypes[i] == "varchar")

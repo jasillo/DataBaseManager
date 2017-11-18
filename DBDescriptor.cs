@@ -9,7 +9,7 @@ namespace DataBaseManager
 {
     class DBDescriptor
     {
-        List<TableDescriptor> myTables;
+        public List<TableDescriptor> myTables;
         public string errors;
         public string results;
 
@@ -152,7 +152,7 @@ namespace DataBaseManager
                     return false;
                 }
             }
-
+            
             if (!myTables[index].insertRow(values))
             {
                 errors += String.Format("violacion de indice primario");

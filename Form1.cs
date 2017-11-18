@@ -48,7 +48,8 @@ namespace DataBaseManager
         }
 
         private void btnVerTablas_Click(object sender, EventArgs e)
-        {            
+        {
+            //BinaryWriter bw = new BinaryWriter(File.Open("BD/estudiante/estudiante.table", FileMode.Append));
             string[] apellido = { "Flores", "Rodriguez", "Sanchez", "Garcia", "Rojas", "Diaz", "Torres",
                 "Lopez", "Gonzales", "Perez", "Chavez", "Vasquez", "Ramos", "Ramirez", "Mendoza", "Espinoza",
                 "Castillo", "Huaman", "Vargas", "Mamani", "Fernandez", "Gutierrez", "Ruiz", "Castro", "Romero",
@@ -57,20 +58,34 @@ namespace DataBaseManager
                 "francisco", "rosa", "damian", "daniela", "edgar", "ronald", "diego", "omar", "alberto", "julio",
                 "daniel", "sandro", "marcela"};
             Random rnd = new Random();
-            string nombretabla = "estudiante";
-            string cadena = String.Format("createtable {0} id integer nombre varchar apellido varchar edad integer ; {1}",
-                nombretabla, Environment.NewLine);
-            //tbResult.Text = cadena;
+            string cadena = "";
+            myAnalyzer.db.myTables[0].tempbw =  new BinaryWriter(File.Open("BD/estudiante/estudiante.table", FileMode.Append));
+            //BinaryWriter bw = new BinaryWriter(File.Open("BD/estudiantex/estudiantex.table", FileMode.Append));
+            for (int i = 0; i < 1000000; i++)
+            {
+            //bw.Write(i);
+            //bw.Write(myfunctions.fixedString(nombre[rnd.Next(0,20)]));
+            //bw.Write(myfunctions.fixedString(apellido[rnd.Next(0, 28)]));
+            //bw.Write(rnd.Next(15, 55));
+            cadena = String.Format("insert estudiante {0} \"{1}\" \"{2}\" {3}; {4}", i, nombre[rnd.Next(0,20)],apellido[rnd.Next(0,28)],rnd.Next(15,55), Environment.NewLine);
             myAnalyzer.analizeSql(cadena);
             myAnalyzer.analyzeNodes();
-            for (int i = 0; i < 200; i++)
-            {
-                cadena = String.Format("insert {0} {1} \"{2}\" \"{3}\" {4};{5}", nombretabla, i, nombre[rnd.Next(0,20)],
-                    apellido[rnd.Next(0,28)], rnd.Next(15, 55),Environment.NewLine);
-                //tbResult.Text += cadena;
-                myAnalyzer.analizeSql(cadena);
-                myAnalyzer.analyzeNodes();
             }
+            myAnalyzer.db.myTables[0].tempbw.Close();
+            //bw.Close();
+
+            //bw = new BinaryWriter(File.Open("BD/estudiante_x/estudiante_x.list", FileMode.Append));
+            //bw.Write(50000000);
+            //myAnalyzer.db.myTables[1].indices.Clear();
+            //myAnalyzer.db.myTables[1].hollows.Clear();
+            //for (int i = 0; i < 50000000; i++)
+            //{
+                //myAnalyzer.db.myTables[1].indices.Add(i * 40);
+            //}
+            //bw.Write(0);
+            //bw.Close();
+            //myAnalyzer.db.myTables[1].end = 2000000000;
+            
             tbResult.Text = myAnalyzer.db.show();
         }
         

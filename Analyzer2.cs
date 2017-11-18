@@ -362,7 +362,7 @@ namespace DataBaseManager
                         }
                         else if (query == Token.pcInsert)
                         {
-                           // Console.WriteLine("campos a insertar {0}{1}{2}", values[0],values[1],values[2]);
+                            //Console.WriteLine("campos a insertar {0}{1}{2}", values[0],values[1],values[2]);
                             if (!db.insertRow(tableName, types, values))
                             {
                                 errors += String.Format("Error al insertar en tabla {0}, {1}{2}", tableName, db.errors, Environment.NewLine);

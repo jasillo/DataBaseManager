@@ -64,7 +64,7 @@ namespace DataBaseManager
 
     public static class myfunctions
     {
-        public static int stringSize = 26;
+        public static int stringSize = 16;
         public static int intSize = sizeof(int);
         public static int dateSize = 9;
         public static int boolSize = 1;
