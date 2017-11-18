@@ -203,7 +203,7 @@ namespace DataBaseManager
                 return;
             }
                 
-            int index = findIndex(where[0]);
+            int index = findFieldIndex(where[0]);
             //no existe indice para ese campo
             if (index == -1)
             {
@@ -266,7 +266,7 @@ namespace DataBaseManager
             return -1;
         }
                 
-        public int findIndex(string fieldName)
+        public int findFieldIndex(string fieldName)
         {
             for (int i = 0; i < btrees.Count; i++)
             {

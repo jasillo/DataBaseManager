@@ -251,7 +251,7 @@ namespace DataBaseManager
                 return false;
             }
             //ver si existe indice para ese campo
-            int index = myTables[tableIndex].findIndex(fieldName);
+            int index = myTables[tableIndex].findFieldIndex(fieldName);
             if (index > -1)
             {
                 errors += String.Format("ya existe el indice");
