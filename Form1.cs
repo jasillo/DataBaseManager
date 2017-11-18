@@ -31,7 +31,7 @@ namespace DataBaseManager
             sql = sql.Replace("\n", "");
             myAnalyzer.analizeSql(sql);
             //myLexical.showListofNodes();
-            Console.WriteLine(myAnalyzer.errors);
+            //Console.WriteLine(myAnalyzer.errors);
             if (!String.IsNullOrEmpty(myAnalyzer.errors))
             {
                 tbResult.Text = "lexical errors : \r" + myAnalyzer.errors;
@@ -48,25 +48,30 @@ namespace DataBaseManager
         }
 
         private void btnVerTablas_Click(object sender, EventArgs e)
-        {
-            tbResult.Text = myAnalyzer.db.show();
-            /*string[] apellido = { "Flores", "Rodríguez", "Sánchez", "García", "Rojas", "Díaz", "Torres",
-                "López", "Gonzales", "Pérez", "Chávez", "Vásquez", "Ramos", "Ramírez", "Mendoza", "Espinoza",
-                "Castillo", "Huamán", "Vargas", "Mamani", "Fernández", "Gutiérrez", "Ruiz", "Castro", "Romero",
-                "Salazar", "Cruz","Gómez", "Rivera" };
+        {            
+            string[] apellido = { "Flores", "Rodriguez", "Sanchez", "Garcia", "Rojas", "Diaz", "Torres",
+                "Lopez", "Gonzales", "Perez", "Chavez", "Vasquez", "Ramos", "Ramirez", "Mendoza", "Espinoza",
+                "Castillo", "Huaman", "Vargas", "Mamani", "Fernandez", "Gutierrez", "Ruiz", "Castro", "Romero",
+                "Salazar", "Cruz","Gomez", "Rivera" };
             string[] nombre = { "jorge", "mauricio", "roger", "manuel", "jose", "alejandra", "maria", "rosario",
                 "francisco", "rosa", "damian", "daniela", "edgar", "ronald", "diego", "omar", "alberto", "julio",
                 "daniel", "sandro", "marcela"};
             Random rnd = new Random();
-            string nombretabla = "persona";
+            string nombretabla = "estudiante";
             string cadena = String.Format("createtable {0} id integer nombre varchar apellido varchar edad integer ; {1}",
                 nombretabla, Environment.NewLine);
-            for (int i = 0; i < 10000; i++)
+            //tbResult.Text = cadena;
+            myAnalyzer.analizeSql(cadena);
+            myAnalyzer.analyzeNodes();
+            for (int i = 0; i < 200; i++)
             {
-                cadena += String.Format("insert {0} {1} {2} {3} {4};{5}", nombretabla, i, nombre[rnd.Next(0,20)],
+                cadena = String.Format("insert {0} {1} \"{2}\" \"{3}\" {4};{5}", nombretabla, i, nombre[rnd.Next(0,20)],
                     apellido[rnd.Next(0,28)], rnd.Next(15, 55),Environment.NewLine);
+                //tbResult.Text += cadena;
+                myAnalyzer.analizeSql(cadena);
+                myAnalyzer.analyzeNodes();
             }
-            tbResult.Text = cadena;*/
+            tbResult.Text = myAnalyzer.db.show();
         }
         
     }

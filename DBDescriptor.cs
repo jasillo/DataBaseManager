@@ -169,14 +169,8 @@ namespace DataBaseManager
             //consigue los indices de los columnas
             if (fields.Count == 0)
                 return true;
-            List<int> listoffield = new List<int>();
-            if (fields[0] == "*")
-            {
-                for (int i = 0; i < myTables[index].myFields.Count; i++)
-                    listoffield.Add(i);
-            }
-            else
-            {
+            
+            if (fields[0] != "*") {             
                 for (int i = 0; i < fields.Count; i++)
                 {
                     int j = myTables[index].isField(fields[i]);
@@ -185,7 +179,6 @@ namespace DataBaseManager
                         errors += String.Format("no existe el campo {0}", fields[i]);
                         return false;
                     }
-                    listoffield.Add(j);
                 }
             }
             
@@ -214,7 +207,9 @@ namespace DataBaseManager
                 return false;
             }
             //llenar el buffer
-            //myTables[index].fillBuffer(where, null);
+            List<string> listoffields = new List<string>();
+            listoffields.Add("*");
+            myTables[index].fillBuffer(where, listoffields);
             myTables[index].deleteBuffer();
 
             return true;

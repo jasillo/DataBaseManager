@@ -40,21 +40,22 @@
             this.tbSql.Location = new System.Drawing.Point(36, 58);
             this.tbSql.Multiline = true;
             this.tbSql.Name = "tbSql";
-            this.tbSql.Size = new System.Drawing.Size(376, 298);
+            this.tbSql.Size = new System.Drawing.Size(376, 355);
             this.tbSql.TabIndex = 0;
             // 
             // tbResult
             // 
             this.tbResult.AcceptsTab = true;
-            this.tbResult.Location = new System.Drawing.Point(582, 58);
+            this.tbResult.Location = new System.Drawing.Point(445, 58);
             this.tbResult.Multiline = true;
             this.tbResult.Name = "tbResult";
-            this.tbResult.Size = new System.Drawing.Size(376, 298);
+            this.tbResult.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.tbResult.Size = new System.Drawing.Size(542, 355);
             this.tbResult.TabIndex = 1;
             // 
             // tbnExecute
             // 
-            this.tbnExecute.Location = new System.Drawing.Point(461, 88);
+            this.tbnExecute.Location = new System.Drawing.Point(36, 29);
             this.tbnExecute.Name = "tbnExecute";
             this.tbnExecute.Size = new System.Drawing.Size(75, 23);
             this.tbnExecute.TabIndex = 2;
@@ -64,7 +65,7 @@
             // 
             // btnVerTablas
             // 
-            this.btnVerTablas.Location = new System.Drawing.Point(461, 144);
+            this.btnVerTablas.Location = new System.Drawing.Point(445, 29);
             this.btnVerTablas.Name = "btnVerTablas";
             this.btnVerTablas.Size = new System.Drawing.Size(75, 23);
             this.btnVerTablas.TabIndex = 3;

@@ -65,6 +65,7 @@ namespace DataBaseManager
 
         public bool insertRow(List<string> values)
         {
+            //ver si se viola indice primario
             for (int i = 0; i < values.Count; i++)
             {
                 int btreeIndex = findBtreeIndex(myFields[i]);
@@ -124,11 +125,12 @@ namespace DataBaseManager
 
         public string select()
         {
-            string res = "";
+            string res = String.Format("numero de filas devueltas : {0}{1}", buffer.Count, Environment.NewLine);
             if (buffer.Count == 0)
-                return "";
-            int columnSize = buffer[0].Count - 1;
-            for (int r = 0; r < buffer.Count; r++)
+                return res;
+            
+            int columnSize = buffer[0].Count;
+            for (int r = 0; r < buffer.Count && r < 200; r++)
             {
                 for (int c = 0; c < columnSize; c++)
                 {
@@ -209,8 +211,7 @@ namespace DataBaseManager
                 if (index == -1)
                     indicesWhere = getTableScandingIndices(where);
                 else
-                    indicesWhere = btrees[index].findIndices(where[2]);
-                
+                    indicesWhere = btrees[index].findIndices(where[2]);                
             }
             //rellenando buffer por campos seleccionados
             if (fieldsSelected[0] == "*")
@@ -235,6 +236,7 @@ namespace DataBaseManager
             
             for (int i = 0; i < indices.Count; i++)
             {
+                Console.WriteLine(indices[i]);                
                 br.BaseStream.Seek(indices[i], SeekOrigin.Begin);
                 for (int j = 0; j < myTypes.Count; j++)
                 {
@@ -267,6 +269,7 @@ namespace DataBaseManager
             {  
                 for (int j = 0; j < indicesFields.Count; j++) // por cada campo seleccionado
                 {
+                    //Console.WriteLine(indicesFields[j]);
                     br.BaseStream.Seek(indices[i]+indicesFields[j], SeekOrigin.Begin);
                     if (myTypes[j] == "integer")
                         buffer[i].Add(br.ReadInt32().ToString());
@@ -368,15 +371,16 @@ namespace DataBaseManager
             int pos = 0;
             for (int i = 0; i < myFields.Count; i++)
             {
+                Console.WriteLine(myTypes[i]);
                 if (myFields[i] == field_)
                     return pos;
-                if (myFields[i] == "varchar")
+                if (myTypes[i] == "varchar")
                     pos += myfunctions.stringSize;
-                else if (myFields[i] == "int")
+                else if (myTypes[i] == "integer")
                     pos += myfunctions.intSize;
-                else if (myFields[i] == "bool")
+                else if (myTypes[i] == "boolean")
                     pos += myfunctions.boolSize;
-                else if (myFields[i] == "date")
+                else if (myTypes[i] == "date")
                     pos += myfunctions.dateSize;
             }
             return pos;
