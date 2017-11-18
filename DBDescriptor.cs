@@ -189,8 +189,8 @@ namespace DataBaseManager
                 }
             }
             
-            myTables[index].fillBuffer(where);
-            results = myTables[index].select(listoffield);
+            myTables[index].fillBuffer(where, fields);
+            results = myTables[index].select();
             return true;
         }
 
@@ -214,7 +214,7 @@ namespace DataBaseManager
                 return false;
             }
             //llenar el buffer
-            myTables[index].fillBuffer(where);
+            //myTables[index].fillBuffer(where, null);
             myTables[index].deleteBuffer();
 
             return true;

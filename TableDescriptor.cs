@@ -122,20 +122,21 @@ namespace DataBaseManager
             return true;           
         }
 
-        public string select(List<int> columnIndices)
+        public string select()
         {
-            string r = "";
-            
-            List<int> indexFields = new List<int>();
-            for (int i = 0; i < buffer.Count; i++)
+            string res = "";
+            if (buffer.Count == 0)
+                return "";
+            int columnSize = buffer[0].Count;
+            for (int r = 0; r < buffer.Count; r++)
             {
-                for (int j = 0; j < columnIndices.Count; j++)
+                for (int c = 0; c < columnSize; c++)
                 {
-                    r += String.Format("{0} \t",buffer[i][columnIndices[j]]);
+                    res += String.Format("{0} \t",buffer[r][c]);
                 }
-                r += String.Format("{0}", Environment.NewLine);
+                res += String.Format("{0}", Environment.NewLine);
             }            
-            return r;
+            return res;
         }
 
         //borra el contenido del buffer de la data fisica
@@ -195,7 +196,7 @@ namespace DataBaseManager
                 btrees[btreeIndex].load(name);
         }
 
-        public void fillBuffer(List<string> where)
+        public void fillBuffer(List<string> where, List<string> fieldsSelected)
         {            
             if (where == null || where.Count == 0)
             {
@@ -209,8 +210,18 @@ namespace DataBaseManager
                 indicesWhere = getTableScandingIndices(where);               
             else
                 indicesWhere = btrees[index].findIndices(where[2]);
-                       
-            fill(indicesWhere);
+
+            List<int> offsetFields = new List<int>();
+            //todos los campos
+            if (fieldsSelected[0] == "*")
+            {
+                fill(indicesWhere);
+                return;
+            }
+            //campos selectos
+            for (int i = 0; i < fieldsSelected.Count; i++)                          
+                offsetFields.Add(findFieldOffset(fieldsSelected[i]));
+            fill(indices, offsetFields);
         }      
 
         private void fill(List<int> indices)
@@ -243,6 +254,35 @@ namespace DataBaseManager
             
         }
 
+        private void fill(List<int> indices, List<int> indicesFields)
+        {
+            buffer.Clear();
+            //creando el numero de filas como indices
+            for (int i = 0; i < indices.Count; i++)
+                buffer.Add(new List<string>());
+
+            BinaryReader br;
+            br = new BinaryReader(File.Open("BD/" + name + "/" + name + ".table", FileMode.Open));
+
+            for (int i = 0; i < indices.Count; i++) // por cada fila
+            {  
+                for (int j = 0; j < indicesFields.Count; j++) // por cada campo seleccionado
+                {
+                    br.BaseStream.Seek(indices[i]+indicesFields[j], SeekOrigin.Begin);
+                    if (myTypes[j] == "integer")
+                        buffer[i].Add(br.ReadInt32().ToString());
+                    else if (myTypes[j] == "boolean")
+                        buffer[i].Add(br.ReadBoolean().ToString());
+                    else if (myTypes[j] == "varchar")
+                        buffer[i].Add(myfunctions.getString(br.ReadString()));
+                    else
+                        buffer[i].Add(br.ReadString());
+                }
+                buffer[i].Add(indices[i].ToString());
+            }
+            br.Close();
+        }
+
         public int isField(string field)
         {
             for (int i = 0; i < myFields.Count; i++)
@@ -254,8 +294,10 @@ namespace DataBaseManager
         } 
 
         public bool createIndex(string fieldName, bool isprimary)
-        {   
-            fillBuffer(null);
+        {
+            List<string> listoffields = new List<string>();
+            listoffields.Add(fieldName);
+            fillBuffer(null,listoffields);
             
             int column = isField(fieldName);
             BTree temp = new BTree(fieldName, isprimary);            
