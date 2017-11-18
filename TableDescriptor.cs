@@ -202,28 +202,15 @@ namespace DataBaseManager
                 fill(indices);
                 return;
             }
-                
-            int index = findFieldIndex(where[0]);
-            //no existe indice para ese campo
-            if (index == -1)
-            {
-                fill(indices);
-                if (where == null || where.Count == 0)
-                    return;
-                int column = isField(where[0]);
-                for (int row = 0; row < buffer.Count; row++)
-                {                    
-                    if (String.Compare(buffer[row][column], where[2]) != 0)
-                    {
-                        buffer.RemoveAt(row);
-                        row--;
-                    }
-                }
-                return;
-            }
-            //exite indice para el campo
-            List<int> indicesTree = btrees[index].findIndices(where[2]);
-            fill(indicesTree);
+            //indices after where
+            List<int> indicesWhere ;    
+            int index = findBtreeIndex(where[0]);            
+            if (index == -1)            
+                indicesWhere = getTableScandingIndices(where);               
+            else
+                indicesWhere = btrees[index].findIndices(where[2]);
+                       
+            fill(indicesWhere);
         }      
 
         private void fill(List<int> indices)
@@ -264,17 +251,7 @@ namespace DataBaseManager
                     return i;
             }
             return -1;
-        }
-                
-        public int findFieldIndex(string fieldName)
-        {
-            for (int i = 0; i < btrees.Count; i++)
-            {
-                if (btrees[i].name == fieldName)
-                    return i;
-            }            
-            return -1;
-        }
+        } 
 
         public bool createIndex(string fieldName, bool isprimary)
         {   
@@ -307,7 +284,7 @@ namespace DataBaseManager
             return true;
         }
 
-        private int findBtreeIndex(string field)
+        public int findBtreeIndex(string field)
         {
             for (int i = 0; i < btrees.Count; i++)
             {
@@ -315,6 +292,51 @@ namespace DataBaseManager
                     return i;
             }
             return -1;
+        }
+
+        public List<int> getTableScandingIndices(List<string> where)
+        {
+            List<int> temp = new List<int>();
+            BinaryReader br;
+            int offset = findFieldOffset(where[0]);
+            int fieldPos = isField(where[0]);
+            br = new BinaryReader(File.Open("BD/" + name + "/" + name + ".table", FileMode.Open));
+            string data = "";
+            for (int i = 0; i < indices.Count; i++)
+            {
+                br.BaseStream.Seek(indices[i]+offset, SeekOrigin.Begin);                
+                if (myTypes[fieldPos] == "integer")
+                    data = br.ReadInt32().ToString();
+                else if (myTypes[fieldPos] == "boolean")
+                    data = br.ReadBoolean().ToString();
+                else if (myTypes[fieldPos] == "varchar")
+                    data = myfunctions.getString(br.ReadString());
+                else
+                    buffer[i].Add(br.ReadString());
+                if (String.Compare(data, where[2]) == 0)
+                    temp.Add(indices[i]);
+            }
+            br.Close();
+            return temp;
+        }
+
+        private int findFieldOffset(string field_)
+        {
+            int pos = 0;
+            for (int i = 0; i < myFields.Count; i++)
+            {
+                if (myFields[i] == field_)
+                    return pos;
+                if (myFields[i] == "varchar")
+                    pos += myfunctions.stringSize;
+                else if (myFields[i] == "int")
+                    pos += myfunctions.intSize;
+                else if (myFields[i] == "bool")
+                    pos += myfunctions.boolSize;
+                else if (myFields[i] == "date")
+                    pos += myfunctions.dateSize;
+            }
+            return pos;
         }
     }
 }

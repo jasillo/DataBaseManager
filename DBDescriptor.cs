@@ -83,7 +83,6 @@ namespace DataBaseManager
                 myTables[tableindex].save();            
         }
 
-
         public bool createTable(string tableName, List<string> values, List<string> types)
         {
             errors = "";
@@ -188,8 +187,8 @@ namespace DataBaseManager
                     }
                     listoffield.Add(j);
                 }
-            }           
-            //busca dentro de los datos fisicos y retorna su resultado
+            }
+            
             myTables[index].fillBuffer(where);
             results = myTables[index].select(listoffield);
             return true;
@@ -251,7 +250,7 @@ namespace DataBaseManager
                 return false;
             }
             //ver si existe indice para ese campo
-            int index = myTables[tableIndex].findFieldIndex(fieldName);
+            int index = myTables[tableIndex].findBtreeIndex(fieldName);
             if (index > -1)
             {
                 errors += String.Format("ya existe el indice");
