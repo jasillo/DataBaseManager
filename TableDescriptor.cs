@@ -127,7 +127,7 @@ namespace DataBaseManager
             string res = "";
             if (buffer.Count == 0)
                 return "";
-            int columnSize = buffer[0].Count;
+            int columnSize = buffer[0].Count - 1;
             for (int r = 0; r < buffer.Count; r++)
             {
                 for (int c = 0; c < columnSize; c++)
@@ -197,31 +197,30 @@ namespace DataBaseManager
         }
 
         public void fillBuffer(List<string> where, List<string> fieldsSelected)
-        {            
-            if (where == null || where.Count == 0)
-            {
-                fill(indices);
-                return;
-            }
-            //indices after where
-            List<int> indicesWhere ;    
-            int index = findBtreeIndex(where[0]);            
-            if (index == -1)            
-                indicesWhere = getTableScandingIndices(where);               
-            else
-                indicesWhere = btrees[index].findIndices(where[2]);
-
+        {
+            List<int> indicesWhere;
             List<int> offsetFields = new List<int>();
-            //todos los campos
+            //calculando indices de las filas
+            if (where == null || where.Count == 0)            
+                indicesWhere = indices;            
+            else
+            {
+                int index = findBtreeIndex(where[0]);
+                if (index == -1)
+                    indicesWhere = getTableScandingIndices(where);
+                else
+                    indicesWhere = btrees[index].findIndices(where[2]);
+                
+            }
+            //rellenando buffer por campos seleccionados
             if (fieldsSelected[0] == "*")
             {
                 fill(indicesWhere);
                 return;
             }
-            //campos selectos
-            for (int i = 0; i < fieldsSelected.Count; i++)                          
+            for (int i = 0; i < fieldsSelected.Count; i++)
                 offsetFields.Add(findFieldOffset(fieldsSelected[i]));
-            fill(indices, offsetFields);
+            fill(indices, offsetFields); 
         }      
 
         private void fill(List<int> indices)
@@ -298,14 +297,16 @@ namespace DataBaseManager
             List<string> listoffields = new List<string>();
             listoffields.Add(fieldName);
             fillBuffer(null,listoffields);
-            
-            int column = isField(fieldName);
-            BTree temp = new BTree(fieldName, isprimary);            
+                        
+            BTree temp = new BTree(fieldName, isprimary);
+
+            if (buffer.Count == 0)
+                return true;
 
             for (int row = 0; row < buffer.Count; row++)
             {
-                string dato = buffer[row][column]; //campo
-                int index = Int32.Parse(buffer[row][myFields.Count]); //posicion
+                string dato = buffer[row][0]; //campo
+                int index = Int32.Parse(buffer[row][1]); //posicion
                 if (!temp.insert(dato, index))
                     return false;
             }
