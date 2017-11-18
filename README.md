@@ -27,4 +27,3 @@ queries de ejemplo:
 
 		dropindex on alumno nombre;
 
-el archivo query1.txt contiene queries para insercion de 10000 filas en una tabla, no tiene indeces, el campo id es unico asi que se le puede aplicar un indice primario a ese campo.
