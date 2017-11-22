@@ -22,20 +22,22 @@ namespace DataBaseManager
         public int curretnPosition;
         public int end = 0;
         public BinaryWriter tempbw;
+        private bool all;
 
-        public TableDescriptor(string tableName)
+        public TableDescriptor(string tableName, List<List<string>> b)
         {
             name = tableName;
             myFields = new List<string>();
             myTypes = new List<string>();
             hollows = new List<int>();
-            indices = new List<int>();
-            buffer = new List<List<string>>();  //coumn -row
+            indices = new List<int>();           
             btrees = new List<BTree>();
             tempIndices = new List<int>();
             tempOffsets = new List<int>();
             rowSize = 0;
             curretnPosition = 0;
+            buffer = b;
+            all = true;
         }        
 
         public bool addField(string fieldName, string typeName)
@@ -100,7 +102,7 @@ namespace DataBaseManager
                 }
                 bw.Close();
                 indices.Add(end);
-                end += rowSize;
+                end++;
             }
             else
             {
@@ -108,7 +110,7 @@ namespace DataBaseManager
                 hollows.RemoveAt(0);
                 indices.Add(index);
 
-                bw = new BinaryWriter(File.Open(name + ".table", FileMode.Open));
+                bw = new BinaryWriter(File.Open("BD/" + name + "/" + name + ".table", FileMode.Open));
                 bw.BaseStream.Seek(index, SeekOrigin.Begin);
                 for (int i = 0; i < myTypes.Count; i++)
                 {
@@ -131,7 +133,7 @@ namespace DataBaseManager
 
         public string select()
         {
-            string res = String.Format("numero de filas devueltas : {0}{1}", buffer.Count, Environment.NewLine);
+            string res = String.Format("numero de filas devueltas : {0}{1}", tempIndices.Count, Environment.NewLine);
             if (buffer.Count == 0)
                 return res;
             
@@ -150,22 +152,29 @@ namespace DataBaseManager
         //borra el contenido del buffer de la data fisica
         public void deleteBuffer()
         {
-            List<int> temp = new List<int>();
-            for (int rowIndex = 0; rowIndex < buffer.Count; rowIndex++)
-                temp.Add(Int32.Parse(buffer[rowIndex][myFields.Count]));
-            if (temp.Count == 0)
-                return; 
-            hollows.AddRange(temp);
-            indices = indices.Except(temp).ToList();
-                        
-            for (int column = 0; column < myFields.Count; column++)
+            if (tempIndices.Count == 0)
+                return;
+            hollows.AddRange(tempIndices);
+            indices = indices.Except(tempIndices).ToList();
+            //borrar indices del arbol
+            int totalRow = 0;
+            while (totalRow< tempIndices.Count)
             {
-                int btreeIndex = findBtreeIndex(myFields[column]);
-                if (btreeIndex == -1)
-                    continue;
-                for (int row = 0; row < temp.Count; row++)
-                    btrees[btreeIndex].delete(buffer[row][column], temp[row]);                
-            }                    
+                for (int column = 0; column < myFields.Count; column++)
+                {
+                    int btreeIndex = findBtreeIndex(myFields[column]);
+                    if (btreeIndex > -1)
+                    {
+                        for (int row = totalRow; row < buffer.Count && row < totalRow + 200; row++)
+                        {
+                            int i = row - totalRow;
+                            btrees[btreeIndex].delete(buffer[i][column], tempIndices[row]);
+                        } 
+                    }
+                }
+                totalRow += 200;
+                fill(totalRow, totalRow + 200);
+            }
         }
 
         //graba el contenido del buffer en la data fisica
@@ -206,91 +215,99 @@ namespace DataBaseManager
 
         public void fillBuffer(List<string> where, List<string> fieldsSelected)
         {
-            List<int> indicesWhere;
-            List<int> offsetFields = new List<int>();
+            tempIndices.Clear();
+            tempOffsets.Clear();           
             //calculando indices de las filas
-            if (where == null || where.Count == 0)            
-                indicesWhere = indices;            
+            if (where == null || where.Count == 0)
+                tempIndices.AddRange(indices);            
             else
             {
                 int index = findBtreeIndex(where[0]);
                 if (index == -1)
-                    indicesWhere = getTableScandingIndices(where);
+                    getTableScandingIndices(where);
                 else
-                    indicesWhere = btrees[index].findIndices(where[2]);                
+                    tempIndices.AddRange(btrees[index].findIndices(where[2]));                
             }
             //rellenando buffer por campos seleccionados
             if (fieldsSelected[0] == "*")
             {
-                fill(indicesWhere);
+                fill(0, 200);
+                all = true;
                 return;
             }
+
+            List<int> fieldsIndices = new List<int>();
             for (int i = 0; i < fieldsSelected.Count; i++)
-                offsetFields.Add(findFieldOffset(fieldsSelected[i]));
-            fill(indices, offsetFields); 
+            {
+                tempOffsets.Add(findFieldOffset(fieldsSelected[i]));
+                fieldsIndices.Add(isField(fieldsSelected[i]));
+            }
+
+            for (int i = 0; i < fieldsSelected.Count; i++)
+                fill(tempOffsets, fieldsIndices, 0, 200);
+            all = false;
         }      
 
-        private void fill(List<int> indices)
+        private void fill(int ini, int fin)
         {
             buffer.Clear();
-            if (indices == null || indices.Count == 0)
+            if (tempIndices == null || tempIndices.Count == 0)
                 return;
+            Console.WriteLine("llego");
             //creando el numero de filas como indices
-            for (int i = 0; i < indices.Count; i++)
+            for (int i = ini; i < tempIndices.Count && i < fin; i++)
                 buffer.Add(new List<string>());
 
             BinaryReader br;
             br = new BinaryReader(File.Open("BD/"+ name + "/" + name + ".table", FileMode.Open));
-            
-            for (int i = 0; i < buffer.Count; i++)
+
+            for (int i = ini; i < buffer.Count && i < fin; i++)
             {
-                //Console.WriteLine(indices[i]);                
-                br.BaseStream.Seek(indices[i], SeekOrigin.Begin);
+                br.BaseStream.Seek(tempIndices[i] * rowSize, SeekOrigin.Begin);
+                int row = i - ini;
                 for (int j = 0; j < myTypes.Count; j++)
                 {
                     if (myTypes[j] == "integer")
-                        buffer[i].Add (br.ReadInt32().ToString());
+                        buffer[row].Add (br.ReadInt32().ToString());
                     else if (myTypes[j] == "boolean")
-                        buffer[i].Add(br.ReadBoolean().ToString());
+                        buffer[row].Add(br.ReadBoolean().ToString());
                     else if (myTypes[j] == "varchar")
-                        buffer[i].Add(myfunctions.getString(br.ReadString()));
+                        buffer[row].Add(myfunctions.getString(br.ReadString()));
                     else
-                        buffer[i].Add(br.ReadString());
-                }
-                buffer[i].Add(indices[i].ToString());
+                        buffer[row].Add(br.ReadString());
+                }                
             }
             br.Close();
-            Console.WriteLine("lines {0}", buffer.Count);
         }
 
-        private void fill(List<int> indices, List<int> indicesFields)
+        private void fill(List<int> indicesFields, List<int> fieldsSelected, int ini, int fin)
         {
             buffer.Clear();
-            if (indices == null || indices.Count == 0)
+            if (tempIndices == null || tempIndices.Count == 0)
                 return;
             //creando el numero de filas como indices
-            for (int i = 0; i < indices.Count; i++)
+            for (int i = ini; i < tempIndices.Count && i < fin; i++)
                 buffer.Add(new List<string>());
 
             BinaryReader br;
             br = new BinaryReader(File.Open("BD/" + name + "/" + name + ".table", FileMode.Open));
 
-            for (int i = 0; i < buffer.Count; i++) // por cada fila
-            {  
+            for (int i = ini; i < buffer.Count && i < fin; i++) // por cada fila
+            {
+                int lineOffset = tempIndices[i] * rowSize;
+                int row = i - ini;
                 for (int j = 0; j < indicesFields.Count; j++) // por cada campo seleccionado
                 {
-                    //Console.WriteLine(indicesFields[j]);
-                    br.BaseStream.Seek(indices[i]+indicesFields[j], SeekOrigin.Begin);
-                    if (myTypes[j] == "integer")
-                        buffer[i].Add(br.ReadInt32().ToString());
-                    else if (myTypes[j] == "boolean")
-                        buffer[i].Add(br.ReadBoolean().ToString());
-                    else if (myTypes[j] == "varchar")
-                        buffer[i].Add(myfunctions.getString(br.ReadString()));
+                    br.BaseStream.Seek(lineOffset + indicesFields[j], SeekOrigin.Begin);
+                    if (myTypes[fieldsSelected[j]] == "integer")
+                        buffer[row].Add(br.ReadInt32().ToString());
+                    else if (myTypes[fieldsSelected[j]] == "boolean")
+                        buffer[row].Add(br.ReadBoolean().ToString());
+                    else if (myTypes[fieldsSelected[j]] == "varchar")
+                        buffer[row].Add(myfunctions.getString(br.ReadString()));
                     else
-                        buffer[i].Add(br.ReadString());
-                }
-                buffer[i].Add(indices[i].ToString());
+                        buffer[row].Add(br.ReadString());
+                }                
             }
             br.Close();
         }
@@ -318,10 +335,7 @@ namespace DataBaseManager
 
             for (int row = 0; row < buffer.Count; row++)
             {
-                string dato = buffer[row][0]; //campo
-                int index = Int32.Parse(buffer[row][1]); //posicion
-                //Console.WriteLine("{0} - {1}", dato, index);
-                if (!temp.insert(dato, index))
+                if (!temp.insert(buffer[row][0], tempIndices[row]))
                     return false;
             }
             btrees.Add(temp);
@@ -351,9 +365,8 @@ namespace DataBaseManager
             return -1;
         }
 
-        public List<int> getTableScandingIndices(List<string> where)
-        {
-            List<int> temp = new List<int>();
+        public void getTableScandingIndices(List<string> where)
+        {            
             BinaryReader br;
             int offset = findFieldOffset(where[0]);
             int fieldPos = isField(where[0]);
@@ -361,7 +374,7 @@ namespace DataBaseManager
             string data = "";
             for (int i = 0; i < indices.Count; i++)
             {
-                br.BaseStream.Seek(indices[i]+offset, SeekOrigin.Begin);                
+                br.BaseStream.Seek((indices[i] * rowSize) + offset, SeekOrigin.Begin);
                 if (myTypes[fieldPos] == "integer")
                     data = br.ReadInt32().ToString();
                 else if (myTypes[fieldPos] == "boolean")
@@ -371,11 +384,9 @@ namespace DataBaseManager
                 else
                     buffer[i].Add(br.ReadString());
                 if (String.Compare(data, where[2]) == 0)
-                    temp.Add(indices[i]);
+                    tempIndices.Add(indices[i]);
             }
             br.Close();
-            Console.WriteLine(temp.Count);
-            return temp;
         }
 
         private int findFieldOffset(string field_)

@@ -12,10 +12,12 @@ namespace DataBaseManager
         public List<TableDescriptor> myTables;
         public string errors;
         public string results;
+        List<List<string>> buffer;
 
         public DBDescriptor()
         {
             myTables = new List<TableDescriptor>();
+            buffer = new List<List<string>>();
             errors = "";
             results = "";
             load();
@@ -37,7 +39,7 @@ namespace DataBaseManager
                 for (int tableIndex = 0; tableIndex < numberOfTables; tableIndex++)
                 {
                     string tablename = br.ReadString();
-                    myTables.Add(new TableDescriptor(tablename));
+                    myTables.Add(new TableDescriptor(tablename, buffer));
                     int fieldscount = br.ReadInt32();
                     for (int j = 0; j < fieldscount; j++)
                     {
@@ -53,8 +55,7 @@ namespace DataBaseManager
                 br.Close();
 
                 for (int tableIndex = 0; tableIndex < myTables.Count; tableIndex++)                
-                    myTables[tableIndex].load();
-                
+                    myTables[tableIndex].load();                
             }                              
         }
 
@@ -99,7 +100,7 @@ namespace DataBaseManager
                     return false;
                 }
             }
-            TableDescriptor td = new TableDescriptor(tableName);
+            TableDescriptor td = new TableDescriptor(tableName, buffer);
             for (int i = 0; i < values.Count; i++)
             {
                 if (!td.addField(values[i], types[i]))
@@ -170,7 +171,7 @@ namespace DataBaseManager
             //consigue los indices de los columnas
             if (fields.Count == 0)
                 return true;
-            
+            //comprobar existencia de campos
             if (fields[0] != "*") {             
                 for (int i = 0; i < fields.Count; i++)
                 {
@@ -182,7 +183,7 @@ namespace DataBaseManager
                     }
                 }
             }
-            
+            //hacer busqueda
             myTables[index].fillBuffer(where, fields);
             results = myTables[index].select();
             return true;
