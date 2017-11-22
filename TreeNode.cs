@@ -67,10 +67,15 @@ namespace DataBaseManager
 
         public void addValue(Record record, TreeNode newSon)
         {
+
             int i = 0;
-            for (i = 0; i < values.Count && String.Compare(record.value, values[i].value) != -1; i++) { }
+            for (i = 0; i < values.Count && String.Compare(record.value, values[i].value) != -1; i++)
+            {}            
             values.Insert(i, record);
-            sons.Insert(i+1, newSon);
+
+            for (i = 0; i < sons.Count && String.Compare(newSon.values[0].value, sons[i].values[0].value) != -1; i++)
+            {}
+            sons.Insert(i, newSon);            
         }
 
         public Record split(TreeNode sibling)
@@ -83,6 +88,8 @@ namespace DataBaseManager
                 return r;
             sibling.sons.AddRange(sons.GetRange(minimum + 1, maximum - minimum + 1));
             sons.RemoveRange(minimum + 1, maximum - minimum + 1);
+            for (int i = 0; i < sibling.sons.Count; i++)
+                sibling.sons[i].father = sibling;
             return r;
         }
 
@@ -90,6 +97,7 @@ namespace DataBaseManager
         {
             for (int i = 0; i < values.Count; i++)
             {
+                //Console.WriteLine("{0} - {1}", data, values[i].value);
                 if (String.Compare(data, values[i].value) == 0)
                     return i;
             }            

@@ -158,6 +158,7 @@ namespace DataBaseManager
                 errors += String.Format("violacion de indice primario");
                 return false;
             }
+
             return true;
         }
 

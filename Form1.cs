@@ -14,6 +14,8 @@ namespace DataBaseManager
     public partial class Form1 : Form
     {
         private Analyzer myAnalyzer;
+        BTree prueba;
+
         public Form1()  
         {
             InitializeComponent();
@@ -22,6 +24,7 @@ namespace DataBaseManager
         private void Form1_Load(object sender, EventArgs e)
         {            
             myAnalyzer = new Analyzer();
+            prueba = new BTree("hola");
         }
         
         private void tbnExecute_Click(object sender, EventArgs e)
@@ -48,7 +51,7 @@ namespace DataBaseManager
         }
 
         private void btnVerTablas_Click(object sender, EventArgs e)
-        {
+        {/*
             //BinaryWriter bw = new BinaryWriter(File.Open("BD/estudiante/estudiante.table", FileMode.Append));
             string[] apellido = { "Flores", "Rodriguez", "Sanchez", "Garcia", "Rojas", "Diaz", "Torres",
                 "Lopez", "Gonzales", "Perez", "Chavez", "Vasquez", "Ramos", "Ramirez", "Mendoza", "Espinoza",
@@ -59,19 +62,20 @@ namespace DataBaseManager
                 "daniel", "sandro", "marcela"};
             Random rnd = new Random();
             string cadena = "";
-            myAnalyzer.db.myTables[0].tempbw =  new BinaryWriter(File.Open("BD/estudiante/estudiante.table", FileMode.Append));
+            myAnalyzer.db.myTables[1].tempbw =  new BinaryWriter(File.Open("BD/prueba/prueba.table", FileMode.Append));
             //BinaryWriter bw = new BinaryWriter(File.Open("BD/estudiantex/estudiantex.table", FileMode.Append));
-            for (int i = 0; i < 1000000; i++)
+            for (int i = 0; i < 100; i++)
             {
             //bw.Write(i);
             //bw.Write(myfunctions.fixedString(nombre[rnd.Next(0,20)]));
             //bw.Write(myfunctions.fixedString(apellido[rnd.Next(0, 28)]));
             //bw.Write(rnd.Next(15, 55));
-            cadena = String.Format("insert estudiante {0} \"{1}\" \"{2}\" {3}; {4}", i, nombre[rnd.Next(0,20)],apellido[rnd.Next(0,28)],rnd.Next(15,55), Environment.NewLine);
+            //cadena = String.Format("insert prueba {0} \"{1}\" \"{2}\" {3}; {4}", i, nombre[rnd.Next(0,20)],apellido[rnd.Next(0,28)],rnd.Next(15,55), Environment.NewLine);
+            cadena = String.Format("insert prueba {0} ; {1}", i, Environment.NewLine);
             myAnalyzer.analizeSql(cadena);
             myAnalyzer.analyzeNodes();
             }
-            myAnalyzer.db.myTables[0].tempbw.Close();
+            myAnalyzer.db.myTables[1].tempbw.Close();
             //bw.Close();
 
             //bw = new BinaryWriter(File.Open("BD/estudiante_x/estudiante_x.list", FileMode.Append));
@@ -85,8 +89,12 @@ namespace DataBaseManager
             //bw.Write(0);
             //bw.Close();
             //myAnalyzer.db.myTables[1].end = 2000000000;
-            
+            */
             tbResult.Text = myAnalyzer.db.show();
+            //myAnalyzer.db.myTables[1].btrees[0].show();
+            //Console.WriteLine(String.Compare("1","1000000"));
+            
+            
         }
         
     }

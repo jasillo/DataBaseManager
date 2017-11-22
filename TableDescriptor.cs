@@ -83,22 +83,22 @@ namespace DataBaseManager
             if (hollows.Count == 0)
             {
 
-                //bw = new BinaryWriter(File.Open("BD/"+ name + "/" + name + ".table", FileMode.Append));
+                bw = new BinaryWriter(File.Open("BD/"+ name + "/" + name + ".table", FileMode.Append));
                 for (int i = 0; i < myTypes.Count; i++)
                 {
                     int btreeIndex = findBtreeIndex(myFields[i]);
                     if (btreeIndex > -1)
                         btrees[btreeIndex].insert(values[i], end);
                     if (myTypes[i] == "integer")
-                        tempbw.Write(Int32.Parse(values[i]));
+                        bw.Write(Int32.Parse(values[i]));
                     else if (myTypes[i] == "boolean")
-                        tempbw.Write(Boolean.Parse(values[i]));
+                        bw.Write(Boolean.Parse(values[i]));
                     else if (myTypes[i] == "varchar")
-                        tempbw.Write(myfunctions.fixedString(values[i]));
+                        bw.Write(myfunctions.fixedString(values[i]));
                     else
-                        tempbw.Write(values[i]);
+                        bw.Write(values[i]);
                 }
-                //bw.Close();
+                bw.Close();
                 indices.Add(end);
                 end += rowSize;
             }
@@ -193,11 +193,9 @@ namespace DataBaseManager
         {
             BinaryReader br = new BinaryReader(new FileStream("BD/" + name + "/" + name + ".list", FileMode.Open));
             int indicesCount = br.ReadInt32();
-            Console.WriteLine("ocupados {0}",indicesCount);
             for (int i = 0; i < indicesCount; i++)
                 indices.Add(br.ReadInt32());
             int hollowsCount = br.ReadInt32();
-            Console.WriteLine("huecos {0}", hollowsCount);
             for (int i = 0; i < hollowsCount; i++)
                 hollows.Add(br.ReadInt32());
             br.Close(); 
@@ -235,6 +233,8 @@ namespace DataBaseManager
         private void fill(List<int> indices)
         {
             buffer.Clear();
+            if (indices == null || indices.Count == 0)
+                return;
             //creando el numero de filas como indices
             for (int i = 0; i < indices.Count; i++)
                 buffer.Add(new List<string>());
@@ -266,6 +266,8 @@ namespace DataBaseManager
         private void fill(List<int> indices, List<int> indicesFields)
         {
             buffer.Clear();
+            if (indices == null || indices.Count == 0)
+                return;
             //creando el numero de filas como indices
             for (int i = 0; i < indices.Count; i++)
                 buffer.Add(new List<string>());
@@ -318,6 +320,7 @@ namespace DataBaseManager
             {
                 string dato = buffer[row][0]; //campo
                 int index = Int32.Parse(buffer[row][1]); //posicion
+                //Console.WriteLine("{0} - {1}", dato, index);
                 if (!temp.insert(dato, index))
                     return false;
             }

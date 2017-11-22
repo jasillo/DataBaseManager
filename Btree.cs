@@ -72,6 +72,7 @@ namespace DataBaseManager
             for (int i = 0; i < sonsCount; i++)
             {
                 n.sons.Add(new TreeNode());
+                n.sons[i].father = n;
                 load(n.sons[i], br);
             }
                 
@@ -116,11 +117,13 @@ namespace DataBaseManager
             if (current.father == null)
             {
                 root = new TreeNode(newRecord, current, sibling);
-                current.father = sibling.father = root;
+                current.father = root;
+                sibling.father = root;
                 return;
             }
             // se añada al padre existente
             current.father.addValue(newRecord, sibling);
+            sibling.father = current.father;
             splitRecursive(current.father);
         }
 
@@ -148,7 +151,11 @@ namespace DataBaseManager
                 //busca el dato dentro del nodo
                 int i = current.findValue(data);
                 if (i != -1)
+                {
+                    Console.WriteLine("encontrado");
                     return current.values[i].indices;
+                }
+                    
                 current = current.findNextNode(data);
             }
             return null;
