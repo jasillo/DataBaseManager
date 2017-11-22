@@ -263,7 +263,8 @@ namespace DataBaseManager
 
             for (int i = ini; i < buffer.Count && i < fin; i++)
             {
-                br.BaseStream.Seek(tempIndices[i] * rowSize, SeekOrigin.Begin);
+                long offset = tempIndices[i] * rowSize;
+                br.BaseStream.Seek(offset, SeekOrigin.Begin);
                 int row = i - ini;
                 for (int j = 0; j < myTypes.Count; j++)
                 {
@@ -294,11 +295,12 @@ namespace DataBaseManager
 
             for (int i = ini; i < buffer.Count && i < fin; i++) // por cada fila
             {
-                int lineOffset = tempIndices[i] * rowSize;
+                long lineOffset = tempIndices[i] * rowSize;
                 int row = i - ini;
                 for (int j = 0; j < indicesFields.Count; j++) // por cada campo seleccionado
                 {
-                    br.BaseStream.Seek(lineOffset + indicesFields[j], SeekOrigin.Begin);
+                    long offset = lineOffset + indicesFields[j];
+                    br.BaseStream.Seek(offset, SeekOrigin.Begin);
                     if (myTypes[fieldsSelected[j]] == "integer")
                         buffer[row].Add(br.ReadInt32().ToString());
                     else if (myTypes[fieldsSelected[j]] == "boolean")
@@ -327,17 +329,34 @@ namespace DataBaseManager
             List<string> listoffields = new List<string>();
             listoffields.Add(fieldName);
             fillBuffer(null,listoffields);
-                        
+                      
             BTree temp = new BTree(fieldName, isprimary);
+            int offset = findFieldOffset(fieldName);
+            int fieldIndex = isField(fieldName);
+            string word = "";
 
-            if (buffer.Count == 0)
-                return true;
-
-            for (int row = 0; row < buffer.Count; row++)
+            BinaryReader br;
+            br = new BinaryReader(File.Open("BD/" + name + "/" + name + ".table", FileMode.Open));
+            for (int i = 0; i < tempIndices.Count; i++)
             {
-                if (!temp.insert(buffer[row][0], tempIndices[row]))
+                long lineOffset = (tempIndices[i] * rowSize) + offset;                
+                br.BaseStream.Seek(lineOffset, SeekOrigin.Begin);
+                if (myTypes[fieldIndex] == "integer")
+                    word = br.ReadInt32().ToString();
+                else if (myTypes[fieldIndex] == "boolean")
+                    word = br.ReadBoolean().ToString();
+                else if (myTypes[fieldIndex] == "varchar")
+                    word = myfunctions.getString(br.ReadString());
+                else
+                    word = br.ReadString();
+                if (!temp.insert(word, tempIndices[i]))
+                {
+                    Console.WriteLine("fallo indexacion");
                     return false;
+                }
             }
+            br.Close();
+            
             btrees.Add(temp);
             BinaryWriter bw = new BinaryWriter(new FileStream("BD/" + name + "/" + fieldName + ".index", FileMode.Create));
             bw.Close();

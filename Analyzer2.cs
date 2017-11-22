@@ -369,7 +369,7 @@ namespace DataBaseManager
                                 return;
                             }
                             results = String.Format("campos insertados en tabla {0} con exito{1}", tableName, Environment.NewLine);
-                            Console.WriteLine("isnert correcto");
+                            //Console.WriteLine("isnert correcto");
                         }
                         else if (query == Token.pcSelect)
                         {

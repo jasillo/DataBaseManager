@@ -53,42 +53,47 @@ namespace DataBaseManager
         private void btnVerTablas_Click(object sender, EventArgs e)
         {/*
             //BinaryWriter bw = new BinaryWriter(File.Open("BD/estudiante/estudiante.table", FileMode.Append));
-            string[] apellido = { "Flores", "Rodriguez", "Sanchez", "Garcia", "Rojas", "Diaz", "Torres",
-                "Lopez", "Gonzales", "Perez", "Chavez", "Vasquez", "Ramos", "Ramirez", "Mendoza", "Espinoza",
-                "Castillo", "Huaman", "Vargas", "Mamani", "Fernandez", "Gutierrez", "Ruiz", "Castro", "Romero",
-                "Salazar", "Cruz","Gomez", "Rivera" };
-            string[] nombre = { "jorge", "mauricio", "roger", "manuel", "jose", "alejandra", "maria", "rosario",
-                "francisco", "rosa", "damian", "daniela", "edgar", "ronald", "diego", "omar", "alberto", "julio",
-                "daniel", "sandro", "marcela"};
+            string[] apellidos = { "Abad", "Abalos", "Abarca", "Abendano", "Abila", "Abina", "Abitua", "Aboites", "Abonce", "Abrego", "Abrica", "Abrigo",
+                "Abundis","Aburto","Acebedo", "Acebes", "Acencio", "Adan", "Adrian", "Agirre", "Agredano", "Aguado", "Aguallo","Aguayo", "Agueda",
+                "Aguero", "Baes", "Bahena", "Baina", "Baisa", "Baker", "Balades", "Balbaneda", "Balberde", "Balbuena", "Balderas", "Baldes","Baldespino"
+                ,"Baldibia", "Baldivia", "Baldivieso","Baldonado","Baldovinos","Balencia","Balencuela","Balensuela","Balentin", "Balenzuela","Carlos",
+                "Carmel", "Carmona", "Carnero", "Caro", "Carpintero", "Carpio", "Carrales","Carranco","Carrasco","Carreno","Carrera","Carreto","Carrillo"
+                ,"Carrion","Carrisal","Carrisales","Carriyo","Carrizal","Carro", "Carvajal","Casa","Casanoba", "Casanova","Casares","Casasola","Dado",
+                "Daniel","Dasa","Davila","Daza","Delara","Delgadillo","Delgado","Delos","Delossantos","Deras","Dimas","Dionicio","Dios","Dolores",
+                "Domingues","Dominguez","Donate","Dongu","Dorado","Dorantes","Duarte","Duenas","Duque","Duran","Duron" };
+            string[] nombres = { "Alberto", "Andres", "Antonio", "Benjamin", "Bruno", "Bryan", "Cristian", "David","Dylan","Eduardo","Enrique","Oscar",
+                "Fabian","Felipe","Fernando","Francisco","Gael","Guillermo","Gustavo","Hector","Ian","Iker","Isaac","Ivan","Jesus","Joel","Jonathan",
+                "Jorge","Jose","Kevin","Manuel","Martin","Mateo","Miguel","Nacho","Nicolas","Omar","Pedro","Rafael","Rafa","Ricardo","Roberto","Rodrigo",
+                "Samuel","Sebastian","Thiago","Uriel","Victor","Alvaro"};
             Random rnd = new Random();
             string cadena = "";
-            myAnalyzer.db.myTables[1].tempbw =  new BinaryWriter(File.Open("BD/prueba/prueba.table", FileMode.Append));
-            //BinaryWriter bw = new BinaryWriter(File.Open("BD/estudiantex/estudiantex.table", FileMode.Append));
-            for (int i = 0; i < 100; i++)
+            //myAnalyzer.db.myTables[1].tempbw =  new BinaryWriter(File.Open("BD/prueba/prueba.table", FileMode.Append));
+            BinaryWriter bw = new BinaryWriter(File.Open("BD/estudiante/estudiante.table", FileMode.Append));
+            for (int i = 0; i < 1000000; i++)
             {
-            //bw.Write(i);
-            //bw.Write(myfunctions.fixedString(nombre[rnd.Next(0,20)]));
-            //bw.Write(myfunctions.fixedString(apellido[rnd.Next(0, 28)]));
-            //bw.Write(rnd.Next(15, 55));
+            bw.Write(i);
+            bw.Write(myfunctions.fixedString(nombres[rnd.Next(0,45)]));
+            bw.Write(myfunctions.fixedString(apellidos[rnd.Next(0, 100)]));
+            bw.Write(rnd.Next(15, 55));
             //cadena = String.Format("insert prueba {0} \"{1}\" \"{2}\" {3}; {4}", i, nombre[rnd.Next(0,20)],apellido[rnd.Next(0,28)],rnd.Next(15,55), Environment.NewLine);
-            cadena = String.Format("insert prueba {0} ; {1}", i, Environment.NewLine);
-            myAnalyzer.analizeSql(cadena);
-            myAnalyzer.analyzeNodes();
+            //cadena = String.Format("insert prueba {0} ; {1}", i, Environment.NewLine);
+            //myAnalyzer.analizeSql(cadena);
+            //myAnalyzer.analyzeNodes();
             }
-            myAnalyzer.db.myTables[1].tempbw.Close();
-            //bw.Close();
+            //myAnalyzer.db.myTables[1].tempbw.Close();
+            bw.Close();
 
             //bw = new BinaryWriter(File.Open("BD/estudiante_x/estudiante_x.list", FileMode.Append));
             //bw.Write(50000000);
-            //myAnalyzer.db.myTables[1].indices.Clear();
-            //myAnalyzer.db.myTables[1].hollows.Clear();
-            //for (int i = 0; i < 50000000; i++)
+            myAnalyzer.db.myTables[0].indices.Clear();
+            myAnalyzer.db.myTables[0].hollows.Clear();
+            for (int i = 0; i < 1000000; i++)
             //{
-                //myAnalyzer.db.myTables[1].indices.Add(i * 40);
+                myAnalyzer.db.myTables[0].indices.Add(i);
             //}
             //bw.Write(0);
             //bw.Close();
-            //myAnalyzer.db.myTables[1].end = 2000000000;
+            myAnalyzer.db.myTables[0].end = 1000000;
             */
             tbResult.Text = myAnalyzer.db.show();
             //myAnalyzer.db.myTables[1].btrees[0].show();
