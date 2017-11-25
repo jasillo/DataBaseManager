@@ -1,12 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DataBaseManager
@@ -101,6 +94,32 @@ namespace DataBaseManager
             
             
         }
-        
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < myAnalyzer.db.myTables.Count; i++)
+            {
+                for (int j = 0; j < myAnalyzer.db.myTables[i].btrees.Count; j++)
+                {
+                    myAnalyzer.db.myTables[i].btrees[j].root = null;
+                }
+            }
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            tbResult.Text = "Limpieza Completa";
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < myAnalyzer.db.myTables.Count; i++)
+            {
+                for (int j = 0; j < myAnalyzer.db.myTables[i].btrees.Count; j++)
+                {
+                    myAnalyzer.db.myTables[i].btrees[j].root = new TreeNode();
+                    myAnalyzer.db.myTables[i].btrees[j].load(myAnalyzer.db.myTables[i].name);
+                }
+            }
+            tbResult.Text = "Carga completa";
+        }
     }
 }

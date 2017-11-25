@@ -1,9 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DataBaseManager
 {
@@ -53,7 +50,7 @@ namespace DataBaseManager
                         myTables[tableIndex].btrees.Add(new BTree(br.ReadString()));                    
                 }
                 br.Close();
-
+                
                 for (int tableIndex = 0; tableIndex < myTables.Count; tableIndex++)                
                     myTables[tableIndex].load();                
             }                              

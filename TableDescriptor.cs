@@ -2,8 +2,6 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DataBaseManager
 {
@@ -195,7 +193,7 @@ namespace DataBaseManager
             bw.Close();
 
             for (int btreeIndex = 0; btreeIndex < btrees.Count; btreeIndex++)            
-                btrees[btreeIndex].save(name);           
+                btrees[btreeIndex].save(name);
         }
 
         public void load()
@@ -209,8 +207,8 @@ namespace DataBaseManager
                 hollows.Add(br.ReadInt32());
             br.Close(); 
 
-            for (int btreeIndex = 0; btreeIndex < btrees.Count; btreeIndex++)
-                btrees[btreeIndex].load(name);
+            //for (int btreeIndex = 0; btreeIndex < btrees.Count; btreeIndex++)
+            //    btrees[btreeIndex].load(name);
         }
 
         public void fillBuffer(List<string> where, List<string> fieldsSelected)
@@ -226,7 +224,12 @@ namespace DataBaseManager
                 if (index == -1)
                     getTableScandingIndices(where);
                 else
-                    tempIndices.AddRange(btrees[index].findIndices(where[2]));                
+                {
+                    if (btrees[index].root == null)
+                        tempIndices.AddRange(btrees[index].findIndices(where[2], name));
+                    else
+                        tempIndices.AddRange(btrees[index].findIndices(where[2]));
+                }                    
             }
             //rellenando buffer por campos seleccionados
             if (fieldsSelected[0] == "*")

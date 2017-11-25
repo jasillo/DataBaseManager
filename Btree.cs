@@ -1,16 +1,13 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DataBaseManager
 {
     
     public class BTree
     {        
-        TreeNode root;
+        public TreeNode root;
         public string name;
         public bool primary;
 
@@ -27,8 +24,19 @@ namespace DataBaseManager
             primary = pri;
         }
 
+        long calculateSizes(TreeNode n)
+        {
+            n.calculateSize();
+            for (int i = 0; i < n.sons.Count; i++)
+                n.size += calculateSizes(n.sons[i]);
+            return n.size;
+        }
+
         public void save(string tableName)
         {
+            if (root == null)
+                return;
+            calculateSizes(root);
             BinaryWriter bw = new BinaryWriter(new FileStream("BD/" + tableName + "/" + name + ".index", FileMode.Create));
             bw.Write(primary);
             save(root,bw);
@@ -37,7 +45,8 @@ namespace DataBaseManager
 
         private void save(TreeNode n, BinaryWriter bw)
         {
-            bw.Write(n.values.Count);
+            bw.Write(n.size);         
+            bw.Write(n.values.Count);            
             for (int i = 0; i < n.values.Count; i++)
             {
                 bw.Write(n.values[i].value);
@@ -60,15 +69,17 @@ namespace DataBaseManager
 
         private void load(TreeNode n, BinaryReader br)
         {
-            int valuesCount = br.ReadInt32();
+            n.size = br.ReadInt64();            
+            int valuesCount = br.ReadInt32();            
             for (int i = 0; i < valuesCount; i++)
             {
                 n.values.Add(new Record(br.ReadString()));
                 int indicesCount = br.ReadInt32();
+
                 for (int j = 0; j < indicesCount; j++)                
                     n.values[i].indices.Add(br.ReadInt32());
             }
-            int sonsCount = br.ReadInt32();
+            int sonsCount = br.ReadInt32();            
             for (int i = 0; i < sonsCount; i++)
             {
                 n.sons.Add(new TreeNode());
@@ -144,23 +155,80 @@ namespace DataBaseManager
         }
 
         public List<int> findIndices(string data)
-        {             
+        {           
             TreeNode current = root;
             while (current != null)
             {
                 //busca el dato dentro del nodo
                 int i = current.findValue(data);
                 if (i != -1)
-                {
-                    Console.WriteLine("encontrado");
+                {                    
                     return current.values[i].indices;
                 }
                     
                 current = current.findNextNode(data);
             }
-            return null;
+            return new List<int>();
         }
-        
+
+        public List<int> findIndices(string data, string tableName)
+        {
+            List<int> temp ;
+            TreeNode current = new TreeNode();
+
+            BinaryReader br = new BinaryReader(new FileStream("BD/" + tableName + "/" + name + ".index", FileMode.Open));
+            primary = br.ReadBoolean();
+            temp =  findIndices(data, br, 1);
+            br.Close();            
+            return temp;
+        }
+
+        private List<int> findIndices(string data, BinaryReader br, long pos)
+        {            
+            br.BaseStream.Seek(pos, SeekOrigin.Begin);
+            List<int> temp;
+            TreeNode n = new TreeNode();
+            long tam = br.ReadInt64();
+            int valuesCount = br.ReadInt32();
+            for (int i = 0; i < valuesCount; i++)
+            {
+                n.values.Add(new Record(br.ReadString()));
+                int indicesCount = br.ReadInt32();
+
+                for (int j = 0; j < indicesCount; j++)
+                    n.values[i].indices.Add(br.ReadInt32());
+            }
+            int sonsCount = br.ReadInt32();
+
+            int valueIndex = n.findValue(data);
+            if (valueIndex != -1)
+            {
+                temp = new List<int>();
+                temp.AddRange(n.values[valueIndex].indices);
+                return temp;
+            }
+
+            if (sonsCount > 0)
+            {
+                int sonIndex = n.findNext(data);                
+                long newPos = findNextPosition(br.BaseStream.Position,br,sonIndex);
+                return findIndices(data, br, newPos);
+            }
+            return new List<int>();
+        }
+
+        private long findNextPosition(long current, BinaryReader br, int item)
+        {
+            for (int i = 0; i < item; i++)
+            {
+                long pos = br.ReadInt64();
+                current += pos;
+                br.BaseStream.Seek(current, SeekOrigin.Begin);
+            }
+            return current;
+        }
+
+
         public bool exist(string data)
         {
             TreeNode current = root;

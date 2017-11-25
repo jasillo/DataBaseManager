@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DataBaseManager
 {
@@ -23,6 +20,11 @@ namespace DataBaseManager
             value = value_;
             indices = new List<int>();
         }
+
+        public int getSize()
+        {
+            return value.Length + 5 + (indices.Count * 4) ;
+        }
     }
 
     public class TreeNode
@@ -30,9 +32,10 @@ namespace DataBaseManager
         public List<TreeNode> sons;
         public List<Record> values;
         public TreeNode father;
+        public long size;
 
-        public static int minimum = 2;
-        public static int maximum = 4;
+        public static int minimum = 10;
+        public static int maximum = 20;
 
         public TreeNode()
         {
@@ -114,6 +117,22 @@ namespace DataBaseManager
                     return sons[i];
             }
             return sons[sons.Count - 1];
+        }
+
+        public int findNext(string data)
+        {
+            int i;
+            for (i = 0; i < values.Count && String.Compare(data, values[i].value ) != -1; i++) {}
+            return i;
+        }
+
+        public void calculateSize()
+        {
+            size = 16; //puntero long + int tamanio values + int tamanio sons
+            for (int i = 0; i < values.Count; i++)
+            {
+                size += values[i].getSize(); 
+            }
         }
     }
 }
