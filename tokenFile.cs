@@ -63,6 +63,9 @@ namespace DataBaseManager
         public static int intSize = sizeof(int);
         public static int dateSize = 9;
         public static int boolSize = 1;
+        public static short maxSize = 10;
+        public static short minSize = 5;
+        public static int nodeSize = 
 
         public static string fixedString(string word)
         {

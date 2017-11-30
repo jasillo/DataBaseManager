@@ -62,7 +62,7 @@ namespace DataBaseManager
             string cadena = "";
             //myAnalyzer.db.myTables[1].tempbw =  new BinaryWriter(File.Open("BD/prueba/prueba.table", FileMode.Append));
             BinaryWriter bw = new BinaryWriter(File.Open("BD/estudiante/estudiante.table", FileMode.Append));
-            for (int i = 0; i < 1000000; i++)
+            for (int i = 0; i < 5000000; i++)
             {
             bw.Write(i);
             bw.Write(myfunctions.fixedString(nombres[rnd.Next(0,45)]));
@@ -80,13 +80,13 @@ namespace DataBaseManager
             //bw.Write(50000000);
             myAnalyzer.db.myTables[0].indices.Clear();
             myAnalyzer.db.myTables[0].hollows.Clear();
-            for (int i = 0; i < 1000000; i++)
+            for (int i = 0; i < 5000000; i++)
             //{
                 myAnalyzer.db.myTables[0].indices.Add(i);
             //}
             //bw.Write(0);
             //bw.Close();
-            myAnalyzer.db.myTables[0].end = 1000000;
+            myAnalyzer.db.myTables[0].end = 5000000;
             */
             tbResult.Text = myAnalyzer.db.show();
             //myAnalyzer.db.myTables[1].btrees[0].show();
@@ -120,6 +120,19 @@ namespace DataBaseManager
                 }
             }
             tbResult.Text = "Carga completa";
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < myAnalyzer.db.myTables.Count; i++)
+            {
+                for (int j = 0; j < myAnalyzer.db.myTables[i].btrees.Count; j++)
+                {
+                    myAnalyzer.db.myTables[i].btrees[j].root = new TreeNode();
+                    myAnalyzer.db.myTables[i].btrees[j].save(myAnalyzer.db.myTables[i].name);
+                }
+            }
+            tbResult.Text = "guardaro completo";
         }
     }
 }
