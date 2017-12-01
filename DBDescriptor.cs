@@ -74,7 +74,7 @@ namespace DataBaseManager
                 bw.Write(myTables[tableIndex].end);
                 bw.Write(myTables[tableIndex].btrees.Count);
                 for (int btreeIndex =0; btreeIndex < myTables[tableIndex].btrees.Count;btreeIndex++)                
-                    bw.Write(myTables[tableIndex].btrees[btreeIndex].name);                
+                    bw.Write(myTables[tableIndex].btrees[btreeIndex].field);                
             }
             bw.Close();
 
@@ -254,10 +254,9 @@ namespace DataBaseManager
 
             if (!myTables[tableIndex].createIndex(fieldName, isprimary))
             {
-                errors += String.Format("es primario y necesita tener a tabla vacia");
+                errors += String.Format("no se pudo agregar indice");
                 return false;
             }
-
             return true;
         }
 

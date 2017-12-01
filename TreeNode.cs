@@ -21,14 +21,18 @@ namespace DataBaseManager
         //copia la mitad del nodo
         public TreeNode(TreeNode sibling)
         {
+            pointers = new List<int>();
+            indices = new List<int>();
+            keys = new List<string>();
+
             keys.AddRange(sibling.keys.GetRange(myfunctions.minSize + 1, myfunctions.maxSize - myfunctions.minSize));
             sibling.keys.RemoveRange(myfunctions.minSize, myfunctions.maxSize - myfunctions.minSize + 1);
 
             indices.AddRange(sibling.indices.GetRange(myfunctions.minSize + 1, myfunctions.maxSize - myfunctions.minSize));
             sibling.indices.RemoveRange(myfunctions.minSize, myfunctions.maxSize - myfunctions.minSize + 1);
 
-            indices.AddRange(sibling.indices.GetRange(myfunctions.minSize + 1, myfunctions.maxSize - myfunctions.minSize + 1));
-            sibling.indices.RemoveRange(myfunctions.minSize + 1, myfunctions.maxSize - myfunctions.minSize + 1);
+            pointers.AddRange(sibling.pointers.GetRange(myfunctions.minSize + 1, myfunctions.maxSize - myfunctions.minSize + 1));
+            sibling.pointers.RemoveRange(myfunctions.minSize + 1, myfunctions.maxSize - myfunctions.minSize + 1);
         }
 
         public void addValue( string key, int index)

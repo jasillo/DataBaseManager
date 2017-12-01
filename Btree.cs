@@ -15,17 +15,29 @@ namespace DataBaseManager
 
         List<int> visitedNodes;
 
-        public BTree(string field_, string table_, bool primary_)
+        public BTree(string table_, string field_, bool primary_)
         {
             nodes = new List<TreeNode>();
             field = field_;
             table = table_;
             primary = primary_;
             visitedNodes = new List<int>();
+            
+            if (File.Exists("BD/" + table + "/" + field + ".btree"))
+            {
+
+            }
+            else
+            {
+                nodes.Add(new TreeNode());
+                root = 0;
+                save();
+            }
         }
 
         public void save()
-        {   
+        {
+            Console.WriteLine("BD/" + table + "/" + field + ".btree");
             BinaryWriter bw = new BinaryWriter(new FileStream("BD/" + table + "/" + field + ".btree", FileMode.Create));
             bw.Write(root);
             for (int i = 0; i < nodes.Count; i++)
@@ -125,8 +137,9 @@ namespace DataBaseManager
             while (current != -1)
             {
                 int i = nodes[current].findValue(key);
+                Console.WriteLine(i);
                 if (i != -1)
-                {
+                {                    
                     indices.Add(nodes[current].indices[i]);              
                     return indices;
                 }

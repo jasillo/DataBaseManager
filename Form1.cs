@@ -16,8 +16,7 @@ namespace DataBaseManager
 
         private void Form1_Load(object sender, EventArgs e)
         {            
-            myAnalyzer = new Analyzer();
-            prueba = new BTree("hola");
+            myAnalyzer = new Analyzer();            
         }
         
         private void tbnExecute_Click(object sender, EventArgs e)
@@ -89,50 +88,12 @@ namespace DataBaseManager
             myAnalyzer.db.myTables[0].end = 5000000;
             */
             tbResult.Text = myAnalyzer.db.show();
-            //myAnalyzer.db.myTables[1].btrees[0].show();
+            myAnalyzer.db.myTables[0].btrees[0].show();
             //Console.WriteLine(String.Compare("1","1000000"));
             
             
         }
 
-        private void button3_Click(object sender, EventArgs e)
-        {
-            for (int i = 0; i < myAnalyzer.db.myTables.Count; i++)
-            {
-                for (int j = 0; j < myAnalyzer.db.myTables[i].btrees.Count; j++)
-                {
-                    myAnalyzer.db.myTables[i].btrees[j].root = null;
-                }
-            }
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            tbResult.Text = "Limpieza Completa";
-        }
-
-        private void button4_Click(object sender, EventArgs e)
-        {
-            for (int i = 0; i < myAnalyzer.db.myTables.Count; i++)
-            {
-                for (int j = 0; j < myAnalyzer.db.myTables[i].btrees.Count; j++)
-                {
-                    myAnalyzer.db.myTables[i].btrees[j].root = new TreeNode();
-                    myAnalyzer.db.myTables[i].btrees[j].load(myAnalyzer.db.myTables[i].name);
-                }
-            }
-            tbResult.Text = "Carga completa";
-        }
-
-        private void button5_Click(object sender, EventArgs e)
-        {
-            for (int i = 0; i < myAnalyzer.db.myTables.Count; i++)
-            {
-                for (int j = 0; j < myAnalyzer.db.myTables[i].btrees.Count; j++)
-                {
-                    myAnalyzer.db.myTables[i].btrees[j].root = new TreeNode();
-                    myAnalyzer.db.myTables[i].btrees[j].save(myAnalyzer.db.myTables[i].name);
-                }
-            }
-            tbResult.Text = "guardaro completo";
-        }
+       
     }
 }

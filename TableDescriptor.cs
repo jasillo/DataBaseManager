@@ -358,11 +358,8 @@ namespace DataBaseManager
                     return false;
                 }
             }
-            br.Close();
-            
-            btrees.Add(temp);
-            BinaryWriter bw = new BinaryWriter(new FileStream("BD/" + name + "/" + fieldName + ".index", FileMode.Create));
-            bw.Close();
+            br.Close();            
+            btrees.Add(temp);           
             return true;                        
         }        
 
@@ -372,8 +369,8 @@ namespace DataBaseManager
             if (btreeIndex == -1)
                 return false;
             btrees.RemoveAt(btreeIndex);
-            if (File.Exists("BD/" + name + "/" + fieldName + ".index"))
-                File.Delete("BD/" + name + "/" + fieldName + ".index");
+            if (File.Exists("BD/" + name + "/" + fieldName + ".btree"))
+                File.Delete("BD/" + name + "/" + fieldName + ".btree");
             return true;
         }
 
