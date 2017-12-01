@@ -6,140 +6,104 @@ namespace DataBaseManager
 {
     
     public class BTree
-    {        
-        public TreeNode root;
-        public string name;
+    {
+        public List<TreeNode> nodes;
+        public string field;
+        public string table;
         public bool primary;
+        int root; // indice en la lista
 
-        public BTree(string field)
-        {
-            root = new TreeNode();
-            name = field;
-            primary = false;
-        }
-        public BTree(string field, bool pri)
-        {
-            root = new TreeNode();
-            name = field;
-            primary = pri;
-        }
+        List<int> visitedNodes;
 
-        long calculateSizes(TreeNode n)
+        public BTree(string field_, string table_, bool primary_)
         {
-            n.calculateSize();
-            for (int i = 0; i < n.sons.Count; i++)
-                n.size += calculateSizes(n.sons[i]);
-            return n.size;
+            nodes = new List<TreeNode>();
+            field = field_;
+            table = table_;
+            primary = primary_;
+            visitedNodes = new List<int>();
         }
 
-        public void save(string tableName)
-        {
-            if (root == null)
-                return;
-            calculateSizes(root);
-            BinaryWriter bw = new BinaryWriter(new FileStream("BD/" + tableName + "/" + name + ".index", FileMode.Create));
-            bw.Write(primary);
-            save(root,bw);
-            bw.Close();
-        }
-
-        private void save(TreeNode n, BinaryWriter bw)
-        {
-            bw.Write(n.size);         
-            bw.Write(n.values.Count);            
-            for (int i = 0; i < n.values.Count; i++)
+        public void save()
+        {   
+            BinaryWriter bw = new BinaryWriter(new FileStream("BD/" + table + "/" + field + ".btree", FileMode.Create));
+            bw.Write(root);
+            for (int i = 0; i < nodes.Count; i++)
             {
-                bw.Write(n.values[i].value);
-                bw.Write(n.values[i].indices.Count);
-                for (int j = 0; j < n.values[i].indices.Count; j++)                
-                    bw.Write(n.values[i].indices[j]);                
+                
             }
-            bw.Write(n.sons.Count);
-            for (int i = 0; i < n.sons.Count; i++)            
-                save(n.sons[i], bw);            
-        }
+            bw.Close();
+        }        
 
         public void load(string tableName)
         {
-            BinaryReader br = new BinaryReader(new FileStream("BD/" + tableName + "/" + name + ".index", FileMode.Open));
-            primary = br.ReadBoolean();
-            load(root, br);
+            BinaryReader br = new BinaryReader(new FileStream("BD/" + table + "/" + field + ".btree", FileMode.Open));
+            
             br.Close();
         }
-
-        private void load(TreeNode n, BinaryReader br)
-        {
-            n.size = br.ReadInt64();            
-            int valuesCount = br.ReadInt32();            
-            for (int i = 0; i < valuesCount; i++)
+       
+        public bool insert(string key, int index)
+        {            
+            int current = root;            
+            while (current != -1)
             {
-                n.values.Add(new Record(br.ReadString()));
-                int indicesCount = br.ReadInt32();
-
-                for (int j = 0; j < indicesCount; j++)                
-                    n.values[i].indices.Add(br.ReadInt32());
-            }
-            int sonsCount = br.ReadInt32();            
-            for (int i = 0; i < sonsCount; i++)
-            {
-                n.sons.Add(new TreeNode());
-                n.sons[i].father = n;
-                load(n.sons[i], br);
-            }
-                
-        }
-
-        public bool insert(string dato, int index)
-        {
-            TreeNode current = root;
-            while (current != null)
-            {
+                visitedNodes.Add(current);
                 //el nodo ya existe, se agrega el indice
-                int i = current.findValue(dato);
+                int i = nodes[current].findValue(key);
                 if (i != -1)
                 {
-                    if (primary && current.values[i].indices.Count > 0)
-                        return false;
-                    current.values[i].indices.Add(index);
+                    nodes[current].indices[i] = index;
                     return true; ;
                 }
                 // es hoja
-                if (current.sons.Count == 0)
+                if (nodes[current].pointers[0] == -1)
                 {
-                    current.addValue(new Record(dato,index));                    
-                    splitRecursive(current);
+                    nodes[current].addValue(key,index);
+                    splitNodes();
+                    visitedNodes.Clear();
                     return true;
                 }
-                //no es hoja
-                else                
-                    current = current.findNextNode(dato);                                    
+                current = nodes[current].findNextNode(key);                                                    
             }
             return false;
         }
 
-        private void splitRecursive(TreeNode current)
+        private void splitNodes()
         {
-            if (current.values.Count <= TreeNode.maximum)
-                return;
-            //hay overflow
-            TreeNode sibling = new TreeNode(); ;
-            Record newRecord = current.split(sibling);
-            //es el root, se necista crear nodo nuevo
-            if (current.father == null)
+            int current;
+            bool newNode = false;
+            string key = "";
+            int index = 0;
+            for (int i = visitedNodes.Count - 1; i >=0; i--)
             {
-                root = new TreeNode(newRecord, current, sibling);
-                current.father = root;
-                sibling.father = root;
-                return;
-            }
-            // se añada al padre existente
-            current.father.addValue(newRecord, sibling);
-            sibling.father = current.father;
-            splitRecursive(current.father);
+                current = visitedNodes[i];
+                if (newNode)
+                {
+                    nodes[current].addValue(key, index, nodes.Count - 1);
+                    newNode = false;
+                }                    
+                                
+                if (nodes[current].keys.Count <= myfunctions.maxSize)
+                    return;
+                key = nodes[current].keys[myfunctions.minSize];
+                index = nodes[current].indices[myfunctions.minSize];
+                TreeNode sibling = new TreeNode(nodes[current]);
+                nodes.Add(sibling);
+                newNode = true;
+            }            
+            if (newNode)
+            {
+                TreeNode newRoot = new TreeNode();
+                newRoot.addValue(key, index);
+                newRoot.pointers[0] = root;
+                newRoot.pointers[1] = nodes.Count - 1;
+                root = nodes.Count;
+                nodes.Add(newRoot);
+            }           
         }
 
         public void delete(string dato, int index)
-        {
+        {/*
             TreeNode current = root;
             while (current != null)
             {
@@ -151,114 +115,55 @@ namespace DataBaseManager
                     return;
                 }
                 current = current.findNextNode(dato);
-            }
+            }*/
         }
 
-        public List<int> findIndices(string data)
-        {           
-            TreeNode current = root;
-            while (current != null)
+        public List<int> findIndices(string key)
+        {
+            List<int> indices = new List<int>();           
+            int current = root;
+            while (current != -1)
             {
-                //busca el dato dentro del nodo
-                int i = current.findValue(data);
+                int i = nodes[current].findValue(key);
                 if (i != -1)
-                {                    
-                    return current.values[i].indices;
+                {
+                    indices.Add(nodes[current].indices[i]);              
+                    return indices;
                 }
                     
-                current = current.findNextNode(data);
+                current = nodes[current].findNextNode(key);
             }
-            return new List<int>();
-        }
-
-        public List<int> findIndices(string data, string tableName)
+            return indices;
+        } 
+        
+        public bool exist(string key)
         {
-            List<int> temp ;
-            TreeNode current = new TreeNode();
-
-            BinaryReader br = new BinaryReader(new FileStream("BD/" + tableName + "/" + name + ".index", FileMode.Open));
-            primary = br.ReadBoolean();
-            temp =  findIndices(data, br, 1);
-            br.Close();            
-            return temp;
-        }
-
-        private List<int> findIndices(string data, BinaryReader br, long pos)
-        {            
-            br.BaseStream.Seek(pos, SeekOrigin.Begin);
-            List<int> temp;
-            TreeNode n = new TreeNode();
-            long tam = br.ReadInt64();
-            int valuesCount = br.ReadInt32();
-            for (int i = 0; i < valuesCount; i++)
-            {
-                n.values.Add(new Record(br.ReadString()));
-                int indicesCount = br.ReadInt32();
-
-                for (int j = 0; j < indicesCount; j++)
-                    n.values[i].indices.Add(br.ReadInt32());
-            }
-            int sonsCount = br.ReadInt32();
-
-            int valueIndex = n.findValue(data);
-            if (valueIndex != -1)
-            {
-                temp = new List<int>();
-                temp.AddRange(n.values[valueIndex].indices);
-                return temp;
-            }
-
-            if (sonsCount > 0)
-            {
-                int sonIndex = n.findNext(data);                
-                long newPos = findNextPosition(br.BaseStream.Position,br,sonIndex);
-                return findIndices(data, br, newPos);
-            }
-            return new List<int>();
-        }
-
-        private long findNextPosition(long current, BinaryReader br, int item)
-        {
-            for (int i = 0; i < item; i++)
-            {
-                long pos = br.ReadInt64();
-                current += pos;
-                br.BaseStream.Seek(current, SeekOrigin.Begin);
-            }
-            return current;
-        }
-
-
-        public bool exist(string data)
-        {
-            TreeNode current = root;
-            while (current != null)
-            {
-                //busca el dato dentro del nodo
-                int i = current.findValue(data);
-                if (i != -1 && current.values[i].indices.Count > 0)
+            int current = root;
+            while (current != -1)
+            {                
+                int i = nodes[current].findValue(key);
+                if (i != -1 && nodes[current].indices[i] != -1)
                     return true;
-                current = current.findNextNode(data);
+                current = nodes[current].findNextNode(key);
             }
             return false;
         }
 
         public void show()
         {
-            //Console.WriteLine( root.values[0]);
             show(root," ");
         }
 
-        private void show(TreeNode n, string space)
+        private void show(int current, string space)
         {
-            if (n == null)
+            if (current == -1)
                 return;
             Console.Write("{0}", space);
-            for (int i = 0; i < n.values.Count; i++)            
-                Console.Write("{0} ", n.values[i].value);
+            for (int i = 0; i < nodes[current].keys.Count; i++)            
+                Console.Write("{0} ", nodes[current].keys[i]);
             Console.WriteLine();
-            for (int i = 0; i < n.sons.Count; i++)
-                show(n.sons[i], space + " ");
+            for (int i = 0; i < nodes[current].pointers.Count; i++)
+                show(nodes[current].pointers[i], space + " ");
         }
 
     }// fin Btree

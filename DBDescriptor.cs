@@ -45,9 +45,10 @@ namespace DataBaseManager
                     }
                     myTables[tableIndex].rowSize = br.ReadInt32();
                     myTables[tableIndex].end = br.ReadInt32();
+
                     int indexCount = br.ReadInt32();
                     for (int i = 0; i < indexCount; i++)                    
-                        myTables[tableIndex].btrees.Add(new BTree(br.ReadString()));                    
+                        myTables[tableIndex].btrees.Add(new BTree(br.ReadString(), tablename, true));                    
                 }
                 br.Close();
                 
