@@ -65,7 +65,7 @@ namespace DataBaseManager
         public static int boolSize = 1;
         public static short maxSize = 10;
         public static short minSize = 5;
-        public static int nodeSize = 250;
+        public static int nodeSize = 254;
 
         public static string fixedString(string word)
         {

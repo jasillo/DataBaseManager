@@ -12,8 +12,11 @@ namespace DataBaseManager
         public string table;
         public bool primary;
         int root; // indice en la lista
+        public bool memory;
+        private int nodesCount;                
 
         List<int> visitedNodes;
+        List<TreeNode> visitedNodesPtr;
 
         public BTree(string table_, string field_, bool primary_)
         {
@@ -22,129 +25,207 @@ namespace DataBaseManager
             table = table_;
             primary = primary_;
             visitedNodes = new List<int>();
-            
+            visitedNodesPtr = new List<TreeNode>();
+            memory = true;           
             if (File.Exists("BD/" + table + "/" + field + ".btree"))
             {
-
+                loadMemory();
             }
             else
             {
-                nodes.Add(new TreeNode());
                 root = 0;
-                save();
+                nodes.Add(new TreeNode(root));                
+                BinaryWriter bw = new BinaryWriter(new FileStream("BD/" + table + "/" + field + ".btree", FileMode.Create));
+                bw.Write(root);
+                bw.Write(primary);
+                bw.Write(nodes.Count);
+                nodes[0].saveAppend(bw);
+                nodesCount = 1;
+                bw.Close();
+                if (!memory)
+                    nodes.Clear();
             }
         }
-
-        public void save()
-        {
-            Console.WriteLine("BD/" + table + "/" + field + ".btree");
-            BinaryWriter bw = new BinaryWriter(new FileStream("BD/" + table + "/" + field + ".btree", FileMode.Create));
-            bw.Write(root);
-            for (int i = 0; i < nodes.Count; i++)
-            {
-                
-            }
-            bw.Close();
-        }        
-
-        public void load(string tableName)
+        public void loadMemory()
         {
             BinaryReader br = new BinaryReader(new FileStream("BD/" + table + "/" + field + ".btree", FileMode.Open));
-            
+            root = br.ReadInt32();
+            primary = br.ReadBoolean();
+            nodesCount = br.ReadInt32();
+            if (memory)
+            {
+                long pos = 9;
+                while (pos < br.BaseStream.Length)
+                {
+                    nodes.Add(new TreeNode(br, pos));
+                    pos += myfunctions.nodeSize;
+                }
+            }
             br.Close();
         }
        
         public bool insert(string key, int index)
-        {            
-            int current = root;            
+        {
+            visitedNodes.Clear();
+            visitedNodesPtr.Clear();
+            int current = root;
+            TreeNode temp;
             while (current != -1)
             {
                 visitedNodes.Add(current);
-                //el nodo ya existe, se agrega el indice
-                int i = nodes[current].findValue(key);
+                if (memory)
+                    temp = nodes[current];
+                else
+                {
+                    temp = new TreeNode(current);
+                    temp.load(table, field);
+                }
+                    
+                visitedNodesPtr.Add(temp);
+
+                int i = temp.findValue(key);
                 if (i != -1)
                 {
-                    nodes[current].indices[i] = index;
-                    return true; ;
+                    temp.indices[i] = index;
+                    saveNodes(0);
+                    return true; //modificar
                 }
-                // es hoja
-                if (nodes[current].pointers[0] == -1)
+                if (temp.pointers[0] == -1)
                 {
-                    nodes[current].addValue(key,index);
-                    splitNodes();
-                    visitedNodes.Clear();
+                    temp.addValue(key, index);
+                    int newNodes = splitNodes();
+                    saveNodes(newNodes);
                     return true;
                 }
-                current = nodes[current].findNextNode(key);                                                    
+                current = temp.findNextNode(key);
             }
             return false;
         }
 
-        private void splitNodes()
-        {
-            int current;
+        private int splitNodes()
+        {            
             bool newNode = false;
             string key = "";
             int index = 0;
-            for (int i = visitedNodes.Count - 1; i >=0; i--)
+            int modified = 0;            
+
+            for (int i = visitedNodesPtr.Count - 1; i >= 0; i--)
             {
-                current = visitedNodes[i];
                 if (newNode)
                 {
-                    nodes[current].addValue(key, index, nodes.Count - 1);
+                    visitedNodesPtr[i].addValue(key, index, nodesCount -1 );
                     newNode = false;
-                }                    
-                                
-                if (nodes[current].keys.Count <= myfunctions.maxSize)
-                    return;
-                key = nodes[current].keys[myfunctions.minSize];
-                index = nodes[current].indices[myfunctions.minSize];
-                TreeNode sibling = new TreeNode(nodes[current]);
-                nodes.Add(sibling);
+                }
+
+                if (visitedNodesPtr[i].keys.Count <= myfunctions.maxSize)
+                    break;
+
+                key = visitedNodesPtr[i].keys[myfunctions.minSize];
+                index = visitedNodesPtr[i].indices[myfunctions.minSize];
+                TreeNode sibling = new TreeNode(visitedNodesPtr[i], nodesCount);
+                if (memory)
+                    nodes.Add(sibling);
+                visitedNodesPtr.Add(sibling);
+                visitedNodes.Add(nodesCount);
+                nodesCount++;
                 newNode = true;
-            }            
+                modified++;
+            }
             if (newNode)
             {
-                TreeNode newRoot = new TreeNode();
+                TreeNode newRoot = new TreeNode(nodesCount);
                 newRoot.addValue(key, index);
                 newRoot.pointers[0] = root;
-                newRoot.pointers[1] = nodes.Count - 1;
-                root = nodes.Count;
-                nodes.Add(newRoot);
+                newRoot.pointers[1] = nodesCount-1;
+                root = nodesCount;
+                if (memory)
+                    nodes.Add(newRoot);                
+                visitedNodesPtr.Add(newRoot);
+                visitedNodes.Add(nodesCount);
+                nodesCount++;
+                modified++;
             }           
+            return modified;
         }
 
-        public void delete(string dato, int index)
-        {/*
-            TreeNode current = root;
-            while (current != null)
+        public void delete(string key, int index)
+        {
+            int current = root;
+            TreeNode temp;
+            while (current != -1)
             {
-                //el nodo ya existe, se agrega el indice
-                int i = current.findValue(dato);
+                if (memory)
+                    temp = nodes[current];
+                else
+                {
+                    temp = new TreeNode(current);
+                    temp.load(table, field);
+                }
+                int i = temp.findValue(key);
                 if (i != -1)
                 {
-                    current.values[i].indices.Remove(index);
+                    temp.indices[i] = -1;
+                    visitedNodesPtr.Add(temp);
+                    saveNodes(0);
                     return;
                 }
-                current = current.findNextNode(dato);
-            }*/
+                current = temp.findNextNode(key);
+            }
         }
+
+        private void saveNodes(int newNodes)
+        {
+            BinaryWriter bw;
+            if (newNodes > 0)
+            {
+                bw = new BinaryWriter(new FileStream("BD/" + table + "/" + field + ".btree", FileMode.Append));
+                for (int i = 0; i < newNodes * myfunctions.nodeSize; i++)
+                    bw.Write(false);
+                bw.Close();
+            }
+            else
+            {
+                bw = new BinaryWriter(new FileStream("BD/" + table + "/" + field + ".btree", FileMode.Open));                
+                visitedNodesPtr[visitedNodesPtr.Count - 1].saveOpen(bw);                
+                bw.Close();
+                return;
+            }
+            
+            bw = new BinaryWriter(new FileStream("BD/" + table + "/" + field + ".btree", FileMode.Open));
+            for (int i = 0; i < visitedNodesPtr.Count; i++)            
+                visitedNodesPtr[i].saveOpen(bw);
+           
+            bw.BaseStream.Seek(0,SeekOrigin.Begin);
+            bw.Write(root);
+            bw.Write(primary);
+            bw.Write(nodesCount);
+            bw.Close();
+        }        
 
         public List<int> findIndices(string key)
         {
             List<int> indices = new List<int>();           
             int current = root;
+            TreeNode temp;
             while (current != -1)
             {
-                int i = nodes[current].findValue(key);
-                Console.WriteLine(i);
+                if (memory)
+                    temp = nodes[current];
+                else
+                {
+                    temp = new TreeNode(current);
+                    temp.load(table, field);
+                }
+                int i = temp.findValue(key);                
                 if (i != -1)
-                {                    
-                    indices.Add(nodes[current].indices[i]);              
+                {
+                    if (temp.indices[i] == -1)
+                        return indices;                  
+                    indices.Add(temp.indices[i]);              
                     return indices;
                 }
                     
-                current = nodes[current].findNextNode(key);
+                current = temp.findNextNode(key);
             }
             return indices;
         } 
@@ -152,18 +233,27 @@ namespace DataBaseManager
         public bool exist(string key)
         {
             int current = root;
+            TreeNode temp;
             while (current != -1)
-            {                
-                int i = nodes[current].findValue(key);
-                if (i != -1 && nodes[current].indices[i] != -1)
+            {
+                if (memory)
+                    temp = nodes[current];
+                else
+                {
+                    temp = new TreeNode(current);
+                    temp.load(table, field);
+                }
+                int i = temp.findValue(key);
+                if (i != -1 && temp.indices[i] != -1)
                     return true;
-                current = nodes[current].findNextNode(key);
+                current = temp.findNextNode(key);
             }
             return false;
         }
 
         public void show()
         {
+            Console.WriteLine("nodos count: {0}", nodesCount);
             show(root," ");
         }
 
@@ -171,12 +261,25 @@ namespace DataBaseManager
         {
             if (current == -1)
                 return;
-            Console.Write("{0}", space);
+            Console.Write("({1}){0}", space, nodes[current].pos);
             for (int i = 0; i < nodes[current].keys.Count; i++)            
                 Console.Write("{0} ", nodes[current].keys[i]);
             Console.WriteLine();
             for (int i = 0; i < nodes[current].pointers.Count; i++)
                 show(nodes[current].pointers[i], space + " ");
+        }
+        //solo si esta en memoria
+        public void saveAll()
+        {
+            BinaryWriter bw = new BinaryWriter(new FileStream("BD/" + table + "/" + field + ".btree", FileMode.Create));
+            bw.Write(root);
+            bw.Write(primary);
+            bw.Write(nodes.Count);            
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                nodes[i].saveAppend(bw);
+            }
+            bw.Close();
         }
 
     }// fin Btree

@@ -166,7 +166,7 @@ namespace DataBaseManager
                         for (int row = totalRow; row < buffer.Count && row < totalRow + 200; row++)
                         {
                             int i = row - totalRow;
-                            //btrees[btreeIndex].delete(buffer[i][column], tempIndices[row]);
+                            btrees[btreeIndex].delete(buffer[i][column], tempIndices[row]);
                         } 
                     }
                 }
@@ -190,10 +190,7 @@ namespace DataBaseManager
             bw.Write(hollows.Count);
             for (int i = 0; i < hollows.Count; i++)
                 bw.Write(hollows[i]);                        
-            bw.Close();
-
-            //for (int btreeIndex = 0; btreeIndex < btrees.Count; btreeIndex++)            
-                //btrees[btreeIndex].save(name);
+            bw.Close();            
         }
 
         public void load()
@@ -206,9 +203,6 @@ namespace DataBaseManager
             for (int i = 0; i < hollowsCount; i++)
                 hollows.Add(br.ReadInt32());
             br.Close(); 
-
-            //for (int btreeIndex = 0; btreeIndex < btrees.Count; btreeIndex++)
-            //    btrees[btreeIndex].load(name);
         }
 
         public void fillBuffer(List<string> where, List<string> fieldsSelected)
@@ -225,10 +219,7 @@ namespace DataBaseManager
                     getTableScandingIndices(where);
                 else
                 {
-                    //if (btrees[index].root == null)
-                        //tempIndices.AddRange(btrees[index].findIndices(where[2], name));
-                    //else
-                        //tempIndices.AddRange(btrees[index].findIndices(where[2]));
+                    tempIndices = btrees[index].findIndices(where[2]);
                 }                    
             }
             //rellenando buffer por campos seleccionados
@@ -359,7 +350,8 @@ namespace DataBaseManager
                 }
             }
             br.Close();            
-            btrees.Add(temp);           
+            btrees.Add(temp);
+            //temp.saveAll();
             return true;                        
         }        
 

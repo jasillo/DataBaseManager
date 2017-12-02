@@ -88,12 +88,44 @@ namespace DataBaseManager
             myAnalyzer.db.myTables[0].end = 5000000;
             */
             tbResult.Text = myAnalyzer.db.show();
-            myAnalyzer.db.myTables[0].btrees[0].show();
+            //myAnalyzer.db.myTables[0].btrees[0].show();
             //Console.WriteLine(String.Compare("1","1000000"));
             
             
         }
 
-       
+        private void button3_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < myAnalyzer.db.myTables.Count; i++)
+            {
+                for (int j = 0; j < myAnalyzer.db.myTables[i].btrees.Count; j++)
+                {
+                    if (!myAnalyzer.db.myTables[i].btrees[j].memory)
+                    {
+                        myAnalyzer.db.myTables[i].btrees[j].memory = true;
+                        myAnalyzer.db.myTables[i].btrees[j].loadMemory();
+                    }                        
+                }
+            }
+            tbResult.Text = "ARBOL EN MEMORIA";
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < myAnalyzer.db.myTables.Count; i++)
+            {
+                for (int j = 0; j < myAnalyzer.db.myTables[i].btrees.Count; j++)
+                {
+                    if (myAnalyzer.db.myTables[i].btrees[j].memory)
+                    {
+                        myAnalyzer.db.myTables[i].btrees[j].memory = false;
+                        myAnalyzer.db.myTables[i].btrees[j].nodes.Clear();
+                    }                    
+                }
+            }
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            tbResult.Text = "ARBOL EN DISCO";
+        }
     }
 }

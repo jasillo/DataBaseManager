@@ -48,7 +48,7 @@ namespace DataBaseManager
 
                     int indexCount = br.ReadInt32();
                     for (int i = 0; i < indexCount; i++)                    
-                        myTables[tableIndex].btrees.Add(new BTree(br.ReadString(), tablename, true));                    
+                        myTables[tableIndex].btrees.Add(new BTree(tablename, br.ReadString(), true));                    
                 }
                 br.Close();
                 
